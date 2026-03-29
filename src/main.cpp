@@ -2,48 +2,65 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <LiquidCrystal.h>
+#include <RTClib.h>
 
-// Configuración de pines para LCD Keypad Shield (D1 RoBoT)
-// RS, Enable, D4, D5, D6, D7
+// Instancias de hardware
+RTC_DS3231 rtc;
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
-// Función para leer el botón presionado
+// Función para obtener texto del botón presionado (con espacios para limpiar el LCD)
 String obtenerNombreBoton(int valorAnalogo) {
-  if (valorAnalogo < 50)   return "DERECHA ";
-  if (valorAnalogo < 195)  return "ARRIBA  ";
-  if (valorAnalogo < 380)  return "ABAJO   ";
+  if (valorAnalogo < 50)   return "DERECHA  ";
+  if (valorAnalogo < 195)  return "ARRIBA   ";
+  if (valorAnalogo < 380)  return "ABAJO    ";
   if (valorAnalogo < 555)  return "IZQUIERDA";
-  if (valorAnalogo < 790)  return "SELECT  ";
-  return "NINGUNO ";
+  if (valorAnalogo < 790)  return "SELECT   ";
+  return "NINGUNO  ";
 }
 
 void setup() {
-  // Inicializar LCD: 16 columnas y 2 filas
+  // Inicialización del LCD
   lcd.begin(16, 2);
   
-  // Mensaje de bienvenida
+  // Inicialización del bus I2C y el RTC
+  if (!rtc.begin()) {
+    lcd.setCursor(0, 0);
+    lcd.print("Error: Sin RTC  ");
+    while (1); // Detener si no hay RTC
+  }
+
+  // Si el RTC perdió la hora (ej: cambió la pila), sincroniza con la PC
+  if (rtc.lostPower()) {
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+
   lcd.setCursor(0, 0);
-  lcd.print("Microclima v1.0");
-  
-  lcd.setCursor(0, 1);
-  lcd.print("Iniciando...");
-  delay(2000);
+  lcd.print("Microclima v0.1");
+  delay(1500);
   lcd.clear();
 }
 
 void loop() {
-  // Leer el valor analógico del teclado en A0
-  int lecturaAnaloga = analogRead(A0);
-  String nombreBoton = obtenerNombreBoton(lecturaAnaloga);
+  // Obtener tiempo actual
+  DateTime ahora = rtc.now();
 
-  // Línea fija superior
+  // MOSTRAR HORA EN LÍNEA 1
   lcd.setCursor(0, 0);
-  lcd.print("Microclima Uno");
+  lcd.print("HORA: ");
+  if (ahora.hour() < 10) lcd.print('0');
+  lcd.print(ahora.hour());
+  lcd.print(':');
+  if (ahora.minute() < 10) lcd.print('0');
+  lcd.print(ahora.minute());
+  lcd.print(':');
+  if (ahora.second() < 10) lcd.print('0');
+  lcd.print(ahora.second());
 
-  // Línea dinámica inferior
+  // MOSTRAR BOTÓN EN LÍNEA 2 (Validación de Hardware)
+  int lecturaAnaloga = analogRead(A0);
   lcd.setCursor(0, 1);
   lcd.print("Boton: ");
-  lcd.print(nombreBoton);
-  
-  delay(100); // Pequeña espera para estabilidad
+  lcd.print(obtenerNombreBoton(lecturaAnaloga));
+
+  delay(200); // Refresco para estabilidad visual
 }

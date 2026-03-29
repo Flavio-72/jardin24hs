@@ -3,27 +3,35 @@
 #include <Wire.h>
 #include <LiquidCrystal.h>
 #include <RTClib.h>
+#include <EEPROM.h>
 
 // --- Configuración de Hardware ---
 RTC_DS3231 rtc;
 LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
+// --- Direcciones EEPROM ---
+const int ADDR_MODO = 0;
+
 // --- Definición de Estados (Máquina de Estados) ---
 enum EstadoSistema {
   MONITOREO,
   AJUSTE_HORAS,
-  AJUSTE_MINUTOS
+  AJUSTE_MINUTOS,
+  CAMBIAR_MODO
+};
+
+enum ModoCultivo {
+  CRECIMIENTO,
+  FLORACION
 };
 
 EstadoSistema estadoActual = MONITOREO;
+ModoCultivo modoActual = CRECIMIENTO;
 
-// Variables para el ajuste de hora
+// Variables temporales
 int horasTemp = 0;
 int minutosTemp = 0;
-
-// Variables para lectura de botones
-int ultimoBoton = -1; 
-unsigned long tiempoUltimoBoton = 0;
+int ultimoBoton = -1;
 
 // --- Definición de Botones ---
 #define BTN_DERECHA  0
@@ -33,7 +41,22 @@ unsigned long tiempoUltimoBoton = 0;
 #define BTN_SELECT   4
 #define BTN_NINGUNO  5
 
-// --- Funciones Auxiliares ---
+// --- Funciones de Persistencia (EEPROM) ---
+
+void cargarConfig() {
+  int m = EEPROM.read(ADDR_MODO);
+  if (m == 255) { // Memoria vacía
+    modoActual = CRECIMIENTO;
+  } else {
+    modoActual = (ModoCultivo)m;
+  }
+}
+
+void guardarConfig() {
+  EEPROM.write(ADDR_MODO, (int)modoActual);
+}
+
+// --- Funciones de Hardware ---
 
 int leerBoton() {
   int valor = analogRead(A0);
@@ -45,7 +68,6 @@ int leerBoton() {
   return BTN_NINGUNO;
 }
 
-// Devuelve el botón solo en el momento en que se presiona (flanco de subida)
 int leerBotonUnico() {
   int botonActual = leerBoton();
   if (botonActual != ultimoBoton) {
@@ -53,17 +75,6 @@ int leerBotonUnico() {
     if (botonActual != BTN_NINGUNO) return botonActual;
   }
   return BTN_NINGUNO;
-}
-
-String obtenerNombreBoton(int id) {
-  switch(id) {
-    case BTN_DERECHA:   return "DERECHA  ";
-    case BTN_ARRIBA:    return "ARRIBA   ";
-    case BTN_ABAJO:     return "ABAJO    ";
-    case BTN_IZQUIERDA: return "IZQUIERDA";
-    case BTN_SELECT:    return "SELECT   ";
-    default:            return "NINGUNO  ";
-  }
 }
 
 void setup() {
@@ -78,7 +89,9 @@ void setup() {
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
-  lcd.print("Microclima v0.1");
+  cargarConfig();
+
+  lcd.print("Microclima v0.3.1");
   delay(1000);
   lcd.clear();
 }
@@ -90,7 +103,6 @@ void loop() {
   switch (estadoActual) {
     
     case MONITOREO:
-      // Línea 1: Mostrar Reloj en vivo
       lcd.setCursor(0, 0);
       lcd.print("HORA: ");
       if (ahora.hour() < 10) lcd.print('0');
@@ -102,12 +114,10 @@ void loop() {
       if (ahora.second() < 10) lcd.print('0');
       lcd.print(ahora.second());
 
-      // Línea 2: Mostrar botón para feedback
       lcd.setCursor(0, 1);
-      lcd.print("Boton: ");
-      lcd.print(obtenerNombreBoton(leerBoton())); // Aquí usamos leerBoton() para ver el estado actual
+      lcd.print("MODO: ");
+      lcd.print(modoActual == CRECIMIENTO ? "CRECIMIENTO " : "FLORACION   ");
 
-      // Transición al menú de ajuste
       if (boton == BTN_SELECT) {
         horasTemp = ahora.hour();
         minutosTemp = ahora.minute();
@@ -118,7 +128,7 @@ void loop() {
 
     case AJUSTE_HORAS:
       lcd.setCursor(0, 0);
-      lcd.print("CONFIGURAR     "); // Padding para borrar "HORA: HH:MM:SS"
+      lcd.print("CONFIGURAR HORA"); 
       lcd.setCursor(0, 1);
       lcd.print("HORAS: >");
       if (horasTemp < 10) lcd.print('0');
@@ -127,21 +137,17 @@ void loop() {
       if (minutosTemp < 10) lcd.print('0');
       lcd.print(minutosTemp);
 
-      if (boton == BTN_ARRIBA) {
-        horasTemp = (horasTemp + 1) % 24;
-      }
-      if (boton == BTN_ABAJO) {
-        horasTemp = (horasTemp == 0) ? 23 : horasTemp - 1;
-      }
+      if (boton == BTN_ARRIBA) horasTemp = (horasTemp + 1) % 24;
+      if (boton == BTN_ABAJO) horasTemp = (horasTemp == 0) ? 23 : horasTemp - 1;
       if (boton == BTN_SELECT) {
         estadoActual = AJUSTE_MINUTOS;
-        delay(200); // Debounce manual
+        delay(200);
       }
       break;
 
     case AJUSTE_MINUTOS:
       lcd.setCursor(0, 0);
-      lcd.print("CONFIGURAR     "); // Padding para borrar "HORA: HH:MM:SS"
+      lcd.print("CONFIGURAR HORA");
       lcd.setCursor(0, 1);
       lcd.print("MINUTOS: ");
       if (horasTemp < 10) lcd.print('0');
@@ -150,23 +156,34 @@ void loop() {
       if (minutosTemp < 10) lcd.print('0');
       lcd.print(minutosTemp);
 
-      if (boton == BTN_ARRIBA) {
-        minutosTemp = (minutosTemp + 1) % 60;
+      if (boton == BTN_ARRIBA) minutosTemp = (minutosTemp + 1) % 60;
+      if (boton == BTN_ABAJO) minutosTemp = (minutosTemp == 0) ? 59 : minutosTemp - 1;
+      if (boton == BTN_SELECT) {
+        rtc.adjust(DateTime(ahora.year(), ahora.month(), ahora.day(), horasTemp, minutosTemp, 0));
+        estadoActual = CAMBIAR_MODO;
+        lcd.clear();
       }
-      if (boton == BTN_ABAJO) {
-        minutosTemp = (minutosTemp == 0) ? 59 : minutosTemp - 1;
+      break;
+
+    case CAMBIAR_MODO:
+      lcd.setCursor(0, 0);
+      lcd.print("ELEGIR CICLO:");
+      lcd.setCursor(0, 1);
+      lcd.print(modoActual == CRECIMIENTO ? ">CRECIMIENTO " : ">FLORACION   ");
+
+      if (boton == BTN_ARRIBA || boton == BTN_ABAJO) {
+        modoActual = (modoActual == CRECIMIENTO) ? FLORACION : CRECIMIENTO;
       }
       if (boton == BTN_SELECT) {
-        // Guardar cambios en el RTC
-        rtc.adjust(DateTime(ahora.year(), ahora.month(), ahora.day(), horasTemp, minutosTemp, 0));
+        guardarConfig();
         estadoActual = MONITOREO;
         lcd.clear();
-        lcd.print("Guardado!");
+        lcd.print("Ciclo guardado!");
         delay(1000);
         lcd.clear();
       }
       break;
   }
 
-  delay(50); // Estabilidad de CPU
+  delay(50);
 }

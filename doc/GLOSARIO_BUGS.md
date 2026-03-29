@@ -9,7 +9,7 @@ Este documento registra los inconvenientes técnicos encontrados durante el desa
 - **Síntoma:** Al pasar de un texto largo (ej: "IZQUIERDA") a uno corto (ej: "UP"), las últimas letras del texto anterior permanecían en la pantalla (ej: "UPQUIERDA").
 - **Causa:** La función `lcd.print()` no borra el resto de la línea, solo sobrescribe los caracteres necesarios.
 - **Solución:** Aplicar **Padding de espacios**. Asegurar que todas las cadenas de texto que se imprimen en la misma posición tengan el mismo número de caracteres, rellenando con espacios en blanco al final.
-  - **Ejemplo:** `"UP     "` en lugar de `"UP"`.
+  - **Ejemplo:** `"CONFIGURAR     "` para tapar `"HORA: HH:MM:SS"`.
 - **Alternativa Descartada:** Usar `lcd.clear()` en cada loop provoca parpadeo visual molesto.
 
 ---

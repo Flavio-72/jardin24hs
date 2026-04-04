@@ -21,6 +21,8 @@ uint32_t lastBlink = 0;
 #define BTN_NINGUNO  5
 
 int botonEvento = BTN_NINGUNO; // Guarda qué botón disparó el evento
+int pantallaMonitoreo = 0; // 0 = Principal (Hora/Temp), 1 = Secundaria (Modo/Luz)
+
 
 enum EventoBoton {
   EV_NINGUNO,
@@ -80,8 +82,8 @@ EventoBoton leerEventoBoton() {
     }
 
     // Detectar Auto-repetición (para flechas subir/bajar)
-    if (duracion > 600) { // Esperar 600ms antes de empezar a repetir
-      if (ahora - lastRepeat > 333) { // 3 pasos por segundo
+    if (duracion > 500) { // Esperar 500ms antes de empezar a repetir
+      if (ahora - lastRepeat > 150) { // Repite más rápido (~6.6 pasos por segundo)
         lastRepeat = ahora;
         botonEvento = ultimoBoton;
         return EV_HOLDING;
@@ -112,30 +114,72 @@ void inicializarMenu() {
 
 void mostrarMonitoreo() {
   DateTime ahora = rtc.now();
-  lcd.setCursor(0, 0);
-  if (ahora.hour() < 10) lcd.print('0');
-  lcd.print(ahora.hour()); lcd.print(':');
-  if (ahora.minute() < 10) lcd.print('0');
-  lcd.print(ahora.minute());
-  
-  lcd.print(" T:"); lcd.print(getTemperatura(), 1);
-  lcd.print(" H:"); lcd.print(getHumedad(), 0);
-  
-  lcd.setCursor(0, 1);
-  lcd.print(config.modoActual == CRECIMIENTO ? "VEGE " : "FLORA ");
-  lcd.print(getEstadoLuz() ? "LUZ:ON " : "LUZ:OFF");
+  if (pantallaMonitoreo == 0) {
+    // Pantalla 0: Hora, Fecha, Temp y Hum
+    lcd.setCursor(0, 0);
+    if (ahora.hour() < 10) lcd.print('0');
+    lcd.print(ahora.hour()); lcd.print(':');
+    if (ahora.minute() < 10) lcd.print('0');
+    lcd.print(ahora.minute());
+    
+    lcd.print("  ");
+    if (ahora.day() < 10) lcd.print('0');
+    lcd.print(ahora.day()); lcd.print('/');
+    if (ahora.month() < 10) lcd.print('0');
+    lcd.print(ahora.month()); lcd.print('/');
+    int anio = ahora.year() % 100;
+    if (anio < 10) lcd.print('0');
+    lcd.print(anio);
+    
+    lcd.setCursor(0, 1);
+    
+    static uint32_t lastSwitch = 0;
+    static int subPantalla = 0;
+    
+    // Cambiamos de mensaje cada 3000ms (3 segundos)
+    if (millis() - lastSwitch > 3000) {
+      subPantalla = (subPantalla + 1) % 2; 
+      lastSwitch = millis();
+    }
+    
+    char msg[17];
+    if (subPantalla == 0) {
+      float t = getTemperatura();
+      int t_int = (int)t;
+      int t_dec = abs((int)(t * 10) % 10);
+      sprintf(msg, "Temp. :%d.%dC", t_int, t_dec);
+    } else {
+      int h = (int)getHumedad();
+      sprintf(msg, "Humedad: %d %%", h);
+    }
+    
+    // Rellenar con espacios en blanco hasta 16 caracteres para limpiar rastros
+    int len = strlen(msg);
+    for (int i = len; i < 16; i++) {
+      msg[i] = ' ';
+    }
+    msg[16] = '\0'; // Fin de cadena
+    
+    lcd.print(msg);
+  } else if (pantallaMonitoreo == 1) {
+    // Pantalla 1: Modo de Cultivo y Estado de Luz
+    lcd.setCursor(0, 0);
+    lcd.print(config.modoActual == CRECIMIENTO ? "Modo: Vege      " : "Modo: Flora     ");
+    lcd.setCursor(0, 1);
+    lcd.print(getEstadoLuz() ? "Luz: On         " : "Luz: Off        ");
+  }
 }
 
 void mostrarEditCampo() {
   lcd.setCursor(0, 0);
   switch (campoActual) {
-    case FLD_HORA_RTC: lcd.print("[HORA RTC]     "); break;
-    case FLD_MIN_RTC:  lcd.print("[MINUTOS RTC]  "); break;
-    case FLD_MODO:     lcd.print("[MODO CULTIVO] "); break;
-    case FLD_TEMP_MAX: lcd.print("[T.MAX VEGE]   "); break;
-    case FLD_HUM_MIN:  lcd.print("[H.MIN VEGE]   "); break;
-    case FLD_LUZ_ON:   lcd.print("[LUZ ENCENDID] "); break;
-    case FLD_LUZ_OFF:  lcd.print("[LUZ APAGADO]  "); break;
+    case FLD_HORA_RTC: lcd.print("Config Hora    "); break;
+    case FLD_MIN_RTC:  lcd.print("Config Minutos "); break;
+    case FLD_MODO:     lcd.print("Config Modo    "); break;
+    case FLD_TEMP_MAX: lcd.print("Config T.Max   "); break;
+    case FLD_HUM_MIN:  lcd.print("Config H.Min   "); break;
+    case FLD_LUZ_ON:   lcd.print("Config Luz On  "); break;
+    case FLD_LUZ_OFF:  lcd.print("Config Luz Off "); break;
     default: break;
   }
 
@@ -143,7 +187,16 @@ void mostrarEditCampo() {
   lcd.print("> ");
   
   if (!blinkState) {
-    lcd.print("      "); // Espacio para parpadeo
+    switch (campoActual) {
+      case FLD_HORA_RTC: lcd.print("__"); break;
+      case FLD_MIN_RTC:  lcd.print("__"); break;
+      case FLD_MODO:     lcd.print("_____"); break;
+      case FLD_TEMP_MAX: lcd.print("__._ C"); break;
+      case FLD_HUM_MIN:  lcd.print("__ %"); break;
+      case FLD_LUZ_ON:   lcd.print("__:00"); break;
+      case FLD_LUZ_OFF:  lcd.print("__:00"); break;
+      default:           lcd.print("__"); break;
+    }
   } else {
     Perfil& p = getPerfilActual();
     switch (campoActual) {
@@ -154,7 +207,7 @@ void mostrarEditCampo() {
         if ((int)tempValFloat < 10) lcd.print('0');
         lcd.print((int)tempValFloat); break;
       case FLD_MODO:
-        lcd.print(config.modoActual == CRECIMIENTO ? "VEGE " : "FLORA "); break;
+        lcd.print(config.modoActual == CRECIMIENTO ? "Vege  " : "Flora "); break;
       case FLD_TEMP_MAX:
         lcd.print(p.tempMax, 1); lcd.print(" C"); break;
       case FLD_HUM_MIN:
@@ -174,13 +227,27 @@ void mostrarEditCampo() {
 void actualizarMenu() {
   EventoBoton evento = leerEventoBoton();
 
-  if (millis() - lastBlink > 350) {
+  uint32_t tiempoBlink = blinkState ? 600 : 200; // Encendido 600ms, apagado 200ms
+  if (millis() - lastBlink > tiempoBlink) {
     blinkState = !blinkState;
     lastBlink = millis();
   }
 
   if (!modoEdicion) {
     mostrarMonitoreo();
+    
+    // Navegación de pantallas de monitoreo
+    if (evento == EV_CLICK) {
+      if (botonEvento == BTN_DERECHA) {
+        pantallaMonitoreo = (pantallaMonitoreo + 1) % 2;
+        lcd.clear();
+      }
+      if (botonEvento == BTN_IZQUIERDA) {
+        pantallaMonitoreo = (pantallaMonitoreo == 0) ? 1 : pantallaMonitoreo - 1;
+        lcd.clear();
+      }
+    }
+
     if (evento == EV_LONG_CLICK && botonEvento == BTN_SELECT) {
       modoEdicion = true;
       campoActual = FLD_HORA_RTC;

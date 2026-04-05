@@ -15,6 +15,8 @@
 
 extern RTC_DS3231 rtc;
 
+enum ModoManual { M_AUTO, M_ON, M_OFF };
+
 void prepararControl();
 void actualizarControl();
 
@@ -22,5 +24,12 @@ float obtenerTemperatura();
 float obtenerHumedad();
 bool obtenerEstadoLuz();
 bool obtenerEstadoExtractor();
+
+void establecerVentiladorManual(ModoManual modo);
+void establecerExtractorManual(ModoManual modo);
+ModoManual obtenerModoManualVent();
+ModoManual obtenerModoManualExt();
+uint32_t obtenerTiempoRestanteManualVent();
+uint32_t obtenerTiempoRestanteManualExt();
 
 #endif

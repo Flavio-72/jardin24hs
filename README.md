@@ -1,8 +1,12 @@
-# Jardín 24hs - Controlador Microclima V1.0.6
+# Jardín 24hs - Controlador Microclima V1.0.7
 
 ---
 
 ## 📜 Historial de Versiones
+
+### [v1.0.7] - 2026-04-05
+- **NEW**: **Control Manual Temporal**: Nueva pantalla de control para forzar ON/OFF en Ventilador y Extractor (útil para fumigación).
+- **SAFETY**: Retorno automático a modo AUTO tras 30 minutos ("Anti-olvidos").
 
 ### [v1.0.6] - 2026-04-05
 - **NEW**: Implementado **Ahorro de Energía LCD**: El backlight se apaga tras 3 minutos de inactividad y se enciende al presionar cualquier botón.

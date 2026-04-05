@@ -197,6 +197,28 @@ void mostrarMonitoreo() {
     lcd.print(buf);
     lcd.setCursor(0, 1);
     lcd.print(obtenerEstadoLuz() ? "Luz: On         " : "Luz: Off        ");
+  } else if (pantallaMonitoreo == 2) {
+    // Pantalla 2: CONTROL MANUAL (30 min)
+    lcd.setCursor(0, 0);
+    ModoManual mv = obtenerModoManualVent();
+    lcd.print("Vent:");
+    if (mv == M_AUTO) lcd.print("[AUTO] ");
+    else {
+      lcd.print(mv == M_ON ? "[ON] " : "[OFF]");
+      uint32_t segs = obtenerTiempoRestanteManualVent() / 1000;
+      lcd.print(segs / 60); lcd.print("m ");
+    }
+    
+    lcd.setCursor(0, 1);
+    ModoManual me = obtenerModoManualExt();
+    lcd.print("Extr:");
+    if (me == M_AUTO) lcd.print("[AUTO] ");
+    else {
+      lcd.print(me == M_ON ? "[ON] " : "[OFF]");
+      uint32_t segs = obtenerTiempoRestanteManualExt() / 1000;
+      lcd.print(segs / 60); lcd.print("m ");
+    }
+    lcd.print("     "); // Limpiar restos
   }
 }
 
@@ -295,12 +317,24 @@ void actualizarMenu() {
     // Navegación de pantallas de monitoreo
     if (evento == EV_CLIC) {
       if (eventoBoton == BTN_DERECHA) {
-        pantallaMonitoreo = (pantallaMonitoreo + 1) % 2;
+        pantallaMonitoreo = (pantallaMonitoreo + 1) % 3;
         lcd.clear();
       }
       if (eventoBoton == BTN_IZQUIERDA) {
-        pantallaMonitoreo = (pantallaMonitoreo == 0) ? 1 : pantallaMonitoreo - 1;
+        pantallaMonitoreo = (pantallaMonitoreo == 0) ? 2 : pantallaMonitoreo - 1;
         lcd.clear();
+      }
+      
+      // Acciones rápidas en Pantalla de Control Manual
+      if (pantallaMonitoreo == 2) {
+        if (eventoBoton == BTN_ARRIBA) {
+          ModoManual sig = (ModoManual)((obtenerModoManualVent() + 1) % 3);
+          establecerVentiladorManual(sig);
+        }
+        if (eventoBoton == BTN_ABAJO) {
+          ModoManual sig = (ModoManual)((obtenerModoManualExt() + 1) % 3);
+          establecerExtractorManual(sig);
+        }
       }
     }
 

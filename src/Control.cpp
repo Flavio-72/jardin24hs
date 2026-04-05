@@ -8,12 +8,12 @@ uint32_t lastRead = 0;
 
 void inicializarControl() {
   dht.begin();
-  pinMode(PIN_LUZ, OUTPUT);
-  pinMode(PIN_EXTRACTOR, OUTPUT);
+  pinMode(PIN_VENTILADOR_INT, OUTPUT);
   
-  // Apagar todo por seguridad al iniciar
-  digitalWrite(PIN_LUZ, HIGH); // Asumiendo lógica inversa (relé común)
-  digitalWrite(PIN_EXTRACTOR, HIGH);
+  // Condición Inicial Segura
+  digitalWrite(PIN_LUZ, HIGH); // Apagado
+  digitalWrite(PIN_EXTRACTOR, HIGH); // Apagado
+  digitalWrite(PIN_VENTILADOR_INT, LOW); // Encendido 24/7 (Lógica inversa)
 }
 
 void actualizarControl() {
@@ -43,18 +43,28 @@ void actualizarControl() {
 
   digitalWrite(PIN_LUZ, estadoLuz ? LOW : HIGH); // Lógica inversa del relé
 
-  // Lógica de Extracción (Temperatura O Humedad)
-  bool tempAlta = (temperatura > p.tempMax);
-  bool humAlta = (humedad > p.humMax);
-  
-  // Condición agresiva: con que una variable viole el umbral, se succiona
-  if (tempAlta || humAlta) {
-    digitalWrite(PIN_EXTRACTOR, LOW); // Encender extractor
-  } 
-  // Histéresis: Se deben relajar AMBAS variables para detener la extracción.
-  // -2° para temp y -5% para hum.
-  else if (temperatura < (p.tempMax - 2.0) && humedad < (p.humMax - 5.0)) { 
-    digitalWrite(PIN_EXTRACTOR, HIGH); // Apagar
+  // --- Lógica de Extracción Inteligente ---
+  if (temperatura < 18.0) {
+    // Protocolo de Invierno (Winter Pulse): Aislar el cultivo del frío,
+    // purgando humedad pesada y renovando CO2 únicamente durante los 2 primeros minutos de cada hora.
+    if (ahora.minute() == 0 || ahora.minute() == 1) {
+      digitalWrite(PIN_EXTRACTOR, LOW);  // Encender extractor (Pulso Activo)
+    } else {
+      digitalWrite(PIN_EXTRACTOR, HIGH); // Apagar extractor (Hibernando)
+    }
+  } else {
+    // Rango Biológico Seguro (Gestión VPD): 
+    // Combate cualquier exceso de Calor O de Humedad.
+    bool tempAlta = (temperatura > p.tempMax);
+    bool humAlta = (humedad > p.humMax);
+    
+    if (tempAlta || humAlta) {
+      digitalWrite(PIN_EXTRACTOR, LOW); // Encender extractor
+    } 
+    // Histéresis dual: se debe normalizar AMBAS variables para dejar de extraer.
+    else if (temperatura < (p.tempMax - 2.0) && humedad < (p.humMax - 5.0)) { 
+      digitalWrite(PIN_EXTRACTOR, HIGH); // Apagar extractor
+    }
   }
 }
 

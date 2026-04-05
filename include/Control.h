@@ -11,7 +11,7 @@
 
 #define PIN_LUZ 13
 #define PIN_EXTRACTOR 11
-#define PIN_HUMIDIFICADOR 12
+#define PIN_VENTILADOR_INT 12
 
 extern RTC_DS3231 rtc;
 

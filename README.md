@@ -1,13 +1,16 @@
-# Jardín 24hs - Controlador Microclima V1.0.2
+# Jardín 24hs - Controlador Microclima V1.0.4
 
 ---
 
 ## 📜 Historial de Versiones
 
+### [v1.0.4] - 2026-04-05
+- **JSON**: Reporte serial enriquecido con `luz_on` (hora de inicio) y `dia` (día del ciclo actual).
+- **JSON**: Estados de relés simplificados a `"on"` / `"off"` para futura integración con dashboards.
+
 ### [v1.0.2] - 2026-04-05
 - **REFACTOR**: Traducción integral del código fuente a español (variables, funciones y comentarios).
 - **UX**: Mensajes de sistema y menús 100% en español.
-- **JSON**: El reporte serial de `luz` ahora muestra `"Encendida"` / `"Apagada"` en lugar de `0/1`.
 
 ### [v1.0.1] - 2026-04-05
 - **FIX**: Corregido `pinMode` de relés (Luz y Extractor) que impedía la conmutación física.

@@ -17,16 +17,23 @@ void reporteSerial() {
     float h = obtenerHumedad();
     bool luzEncendida = obtenerEstadoLuz();
     bool extractorEncendido = obtenerEstadoExtractor();
+    
+    PerfilCultivo& p = obtenerPerfilActual();
+    int diaCiclo = 0;
+    if (config.inicioCicloUnix > 0 && ahora.unixtime() >= config.inicioCicloUnix) {
+      diaCiclo = (ahora.unixtime() - config.inicioCicloUnix) / 86400;
+    }
+
     const char* modo = (config.modoActual == CRECIMIENTO) ? "VEGE" : "FLORA";
     
     // Formato semi-JSON para facilitar log de base de datos futura
-    char logMsg[128];
+    char logMsg[160];
     int t_int = (int)t; int t_dec = abs((int)(t*10)%10);
     int h_int = (int)h; int h_dec = abs((int)(h*10)%10);
     
-    sprintf(logMsg, "{\"time\":\"20%02d-%02d-%02d %02d:%02d:%02d\",\"temp\":%d.%d,\"hum\":%d.%d,\"luz\":\"%s\",\"extractor\":\"%s\",\"modo\":\"%s\"}",
+    sprintf(logMsg, "{\"time\":\"20%02d-%02d-%02d %02d:%02d:%02d\",\"temp\":%d.%d,\"hum\":%d.%d,\"luz\":\"%s\",\"luz_on\":\"%02d:00\",\"extractor\":\"%s\",\"modo\":\"%s\",\"dia\":%d}",
             ahora.year() % 100, ahora.month(), ahora.day(), ahora.hour(), ahora.minute(), ahora.second(),
-            t_int, t_dec, h_int, h_dec, (luzEncendida ? "Encendida" : "Apagada"), (extractorEncendido ? "Encendida" : "Apagada"), modo);
+            t_int, t_dec, h_int, h_dec, (luzEncendida ? "on" : "off"), p.horaOn, (extractorEncendido ? "on" : "off"), modo, diaCiclo);
             
     Serial.println(logMsg);
   }
@@ -48,7 +55,7 @@ void setup() {
   prepararControl();
   inicializarMenu();
 
-  Serial.println("Sistema Microclima Modular v1.0.2 Iniciado");
+  Serial.println("Sistema Microclima Modular v1.0.4 Iniciado");
 }
 
 void loop() {

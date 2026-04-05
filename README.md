@@ -37,7 +37,11 @@ Sistema de control ambiental pasivo-activo diseñado específicamente para optim
 ## 🌟 Descripción del Sistema
 
 La arquitectura de Microclima se centra en **perfiles pre-cargados orientados a la transpiración biológica** (Déficit de Presión de Vapor). 
-Con solo asignarle el horario en el que debe simular el amanecer y en qué fase vital se encuentra la planta, el sistema asume el control sobre las luces y la renovación del aire. Busca equilibrar de forma agresiva la atmósfera en épocas calurosas, mientras cuida el calor de las raíces y el suelo durante los fríos intensos.
+
+### 4. Control Manual y Mantenimiento (M-Override)
+Para tareas de fumigación, aplicación de foliares o pruebas de hardware, el sistema permite intervenir los actuadores desde el **Menú de Configuración** (Mantener pulsado botón SELECT):
+- **Estados:** `AUTO` (por defecto), `ON` (siempre encendido), `OFF` (siempre apagado).
+- **Interrupción de 30 min:** Al activar un modo manual, se inicia un temporizador de seguridad. Si el usuario olvida resetear el sistema, este volverá solo al control automático tras media hora, protegiendo el ciclo biológico. El menú muestra una cuenta regresiva del tiempo restante. Busca equilibrar de forma agresiva la atmósfera en épocas calurosas, mientras cuida el calor de las raíces y el suelo durante los fríos intensos.
 
 ### 🛠️ Hardware Compatible
 - **Placa Principal:** Arduino Uno (R3).

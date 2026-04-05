@@ -43,6 +43,8 @@ enum CampoEdicion {
   CAMPO_MODO,
   CAMPO_DIAS_CICLO,
   CAMPO_LUZ_ON,
+  CAMPO_VENT_MANUAL,
+  CAMPO_EXT_MANUAL,
   TOTAL_CAMPOS
 };
 
@@ -111,7 +113,7 @@ void inicializarMenu() {
   pinMode(10, OUTPUT);
   digitalWrite(10, HIGH); // Encender Backlight
   lcd.begin(16, 2);
-  lcd.print("Jardin 24hs v1.0.6");
+  lcd.print("Jardin 24hs v1.0.8");
   delay(1000);
   lcd.clear();
   ultimaActividad = millis();
@@ -197,28 +199,6 @@ void mostrarMonitoreo() {
     lcd.print(buf);
     lcd.setCursor(0, 1);
     lcd.print(obtenerEstadoLuz() ? "Luz: On         " : "Luz: Off        ");
-  } else if (pantallaMonitoreo == 2) {
-    // Pantalla 2: CONTROL MANUAL (30 min)
-    lcd.setCursor(0, 0);
-    ModoManual mv = obtenerModoManualVent();
-    lcd.print("Vent:");
-    if (mv == M_AUTO) lcd.print("[AUTO] ");
-    else {
-      lcd.print(mv == M_ON ? "[ON] " : "[OFF]");
-      uint32_t segs = obtenerTiempoRestanteManualVent() / 1000;
-      lcd.print(segs / 60); lcd.print("m ");
-    }
-    
-    lcd.setCursor(0, 1);
-    ModoManual me = obtenerModoManualExt();
-    lcd.print("Extr:");
-    if (me == M_AUTO) lcd.print("[AUTO] ");
-    else {
-      lcd.print(me == M_ON ? "[ON] " : "[OFF]");
-      uint32_t segs = obtenerTiempoRestanteManualExt() / 1000;
-      lcd.print(segs / 60); lcd.print("m ");
-    }
-    lcd.print("     "); // Limpiar restos
   }
 }
 
@@ -233,6 +213,8 @@ void mostrarEditCampo() {
     case CAMPO_MODO:     lcd.print("Config Modo    "); break;
     case CAMPO_DIAS_CICLO: lcd.print("Dias del Ciclo "); break;
     case CAMPO_LUZ_ON:   lcd.print("Config Luz On  "); break;
+    case CAMPO_VENT_MANUAL: lcd.print("Vent. Manual   "); break;
+    case CAMPO_EXT_MANUAL:  lcd.print("Extr. Manual   "); break;
     default: break;
   }
 
@@ -277,6 +259,24 @@ void mostrarEditCampo() {
       case CAMPO_LUZ_ON:
         if (p.horaOn < 10) lcd.print('0');
         lcd.print(p.horaOn); lcd.print(":00"); break;
+      case CAMPO_VENT_MANUAL: {
+        ModoManual m = obtenerModoManualVent();
+        if (m == M_AUTO) lcd.print("[AUTO]   ");
+        else {
+          lcd.print(m == M_ON ? "[ON] " : "[OFF]");
+          lcd.print(obtenerTiempoRestanteManualVent() / 60000); lcd.print("m");
+        }
+        break;
+      }
+      case CAMPO_EXT_MANUAL: {
+        ModoManual m = obtenerModoManualExt();
+        if (m == M_AUTO) lcd.print("[AUTO]   ");
+        else {
+          lcd.print(m == M_ON ? "[ON] " : "[OFF]");
+          lcd.print(obtenerTiempoRestanteManualExt() / 60000); lcd.print("m");
+        }
+        break;
+      }
       default: break;
     }
   }
@@ -317,24 +317,12 @@ void actualizarMenu() {
     // Navegación de pantallas de monitoreo
     if (evento == EV_CLIC) {
       if (eventoBoton == BTN_DERECHA) {
-        pantallaMonitoreo = (pantallaMonitoreo + 1) % 3;
+        pantallaMonitoreo = (pantallaMonitoreo + 1) % 2;
         lcd.clear();
       }
       if (eventoBoton == BTN_IZQUIERDA) {
-        pantallaMonitoreo = (pantallaMonitoreo == 0) ? 2 : pantallaMonitoreo - 1;
+        pantallaMonitoreo = (pantallaMonitoreo == 0) ? 1 : pantallaMonitoreo - 1;
         lcd.clear();
-      }
-      
-      // Acciones rápidas en Pantalla de Control Manual
-      if (pantallaMonitoreo == 2) {
-        if (eventoBoton == BTN_ARRIBA) {
-          ModoManual sig = (ModoManual)((obtenerModoManualVent() + 1) % 3);
-          establecerVentiladorManual(sig);
-        }
-        if (eventoBoton == BTN_ABAJO) {
-          ModoManual sig = (ModoManual)((obtenerModoManualExt() + 1) % 3);
-          establecerExtractorManual(sig);
-        }
       }
     }
 
@@ -386,6 +374,16 @@ void actualizarMenu() {
             break;
           case CAMPO_DIAS_CICLO: eDiasCiclo = (eDiasCiclo + 1) % 999; break;
           case CAMPO_LUZ_ON:   p.horaOn = (p.horaOn + 1) % 24; break;
+          case CAMPO_VENT_MANUAL: {
+            ModoManual sig = (ModoManual)((obtenerModoManualVent() + 1) % 3);
+            establecerVentiladorManual(sig);
+            break;
+          }
+          case CAMPO_EXT_MANUAL: {
+            ModoManual sig = (ModoManual)((obtenerModoManualExt() + 1) % 3);
+            establecerExtractorManual(sig);
+            break;
+          }
           default: break;
         }
       }
@@ -402,6 +400,18 @@ void actualizarMenu() {
             break;
           case CAMPO_DIAS_CICLO: eDiasCiclo = (eDiasCiclo == 0) ? 999 : eDiasCiclo - 1; break;
           case CAMPO_LUZ_ON:   p.horaOn = (p.horaOn == 0) ? 23 : p.horaOn - 1; break;
+          case CAMPO_VENT_MANUAL: {
+            ModoManual act = obtenerModoManualVent();
+            ModoManual sig = (act == M_AUTO) ? M_OFF : (ModoManual)(act - 1);
+            establecerVentiladorManual(sig);
+            break;
+          }
+          case CAMPO_EXT_MANUAL: {
+            ModoManual act = obtenerModoManualExt();
+            ModoManual sig = (act == M_AUTO) ? M_OFF : (ModoManual)(act - 1);
+            establecerExtractorManual(sig);
+            break;
+          }
           default: break;
         }
       }

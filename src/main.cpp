@@ -55,7 +55,7 @@ void setup() {
   prepararControl();
   inicializarMenu();
 
-  Serial.println("Sistema Microclima Modular v1.0.7 Iniciado");
+  Serial.println("Sistema Microclima Modular v1.0.8 Iniciado");
 }
 
 void loop() {

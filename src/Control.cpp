@@ -49,22 +49,24 @@ void actualizarControl() {
   if (temperatura < 18.0) {
     // Protocolo de Invierno (Winter Pulse): Aislar el cultivo del frío,
     // purgando humedad pesada y renovando CO2 únicamente durante los 2 primeros minutos de cada hora.
-    if (ahora.minute() == 0 || ahora.minute() == 1) {
+    if (ahora.minute() < 2) {
       digitalWrite(PIN_EXTRACTOR, LOW);  // Encender extractor (Pulso Activo)
     } else {
       digitalWrite(PIN_EXTRACTOR, HIGH); // Apagar extractor (Hibernando)
     }
   } else {
-    // Rango Biológico Seguro (Gestión VPD): 
-    // Combate cualquier exceso de Calor O de Humedad.
+    // Rango Biológico Seguro (Gestión VPD + Pulso de Respiro): 
+    // Combate cualquier exceso de Calor/Humedad Y asegura CO2 cada 3 horas.
     bool tempAlta = (temperatura > p.tempMax);
     bool humAlta = (humedad > p.humMax);
+    bool pulsoRespiro = (ahora.hour() % 3 == 0 && ahora.minute() < 5);
     
-    if (tempAlta || humAlta) {
+    if (tempAlta || humAlta || pulsoRespiro) {
       digitalWrite(PIN_EXTRACTOR, LOW); // Encender extractor
     } 
     // Histéresis dual: se debe normalizar AMBAS variables para dejar de extraer.
-    else if (temperatura < (p.tempMax - 2.0) && humedad < (p.humMax - 5.0)) { 
+    // Solo apagamos si el pulso de respiro no está activo.
+    else if (!pulsoRespiro && temperatura < (p.tempMax - 2.0) && humedad < (p.humMax - 5.0)) { 
       digitalWrite(PIN_EXTRACTOR, HIGH); // Apagar extractor
     }
   }

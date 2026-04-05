@@ -1,8 +1,12 @@
-# Jardín 24hs - Controlador Microclima V1.0.4
+# Jardín 24hs - Controlador Microclima V1.0.5
 
 ---
 
 ## 📜 Historial de Versiones
+
+### [v1.0.5] - 2026-04-05
+- **NEW**: Implementado **Pulso de Respiro** (Renovación forzada de aire) de 5 minutos cada 3 horas para asegurar niveles de CO2.
+- **LOGIC**: Prioridad de VPD sobre el pulso de respiro (coexistencia segura).
 
 ### [v1.0.4] - 2026-04-05
 - **JSON**: Reporte serial enriquecido con `luz_on` (hora de inicio) y `dia` (día del ciclo actual).
@@ -44,9 +48,10 @@ Con solo asignarle el horario en el que debe simular el amanecer y en qué fase 
 Configuración rápida desde la pantalla LCD. Desaparecen los ajustes manuales intrincados. Al configurar la hora local y elegir entre Crecimiento o Floración, el software calcula internamente la franja horaria para apagar las luces en base al fotoperíodo ideal: 18 horas de día para Crecimiento, 12 horas de día para Floración.
 
 ### 2. Extracción Inteligente (Control Atmosférico)
-El extractor opera como el pulmón del recinto basándose en dos mecanismos complementarios:
-- **Gestión Atmosférica Normal:** Toma acción si se violan los topes térmicos o hay sobre-saturación de humedad (evitando la formación de mohos). Utiliza márgenes de alivio (-2°C de Temperatura, -5% de Humedad) para detener los motores únicamente cuando el cuarto se haya renovado por completo. Esto protege la vida mecánica del equipo contra parpadeos de encendido/apagado por mínimas variaciones.
-- **Protección contra Frío Extremo:** El mayor peligro nocturno en recintos apartados. Si la temperatura perfora la línea de riesgo de las plantas (menor a 18°C), el sistema bloquea temporalmente la extracción principal para no inyectar aire exterior helado que destruya el calor natural acumulado. Para suplantarlo, acciona un **Pulso de Purga** estricto: obliga al motor de extracción a encenderse durante **2 minutos enteros al iniciar cada hora de reloj**, garantizando el recambio de oxígeno viciado sin sacrificar el ecosistema térmico.
+El extractor opera como el pulmón del recinto basándose en tres mecanismos complementarios:
+- **Gestión Atmosférica Normal (VPD):** Toma acción si se violan los topes térmicos o hay sobre-saturación de humedad. Utiliza márgenes de alivio (-2°C de Temperatura, -5% de Humedad) para evitar el "flickeo" del motor.
+- **Pulso de Respiro (Seguridad de CO2):** Incluso si el clima es perfecto, el sistema fuerza una extracción de **5 minutos cada 3 horas**. Esto garantiza la entrada de aire fresco y CO2, vital para la fotosíntesis, sin desgastar el motor.
+- **Protección contra Frío Extremo (Winter Pulse):** Si la temperatura cae por debajo de 18°C, el sistema prioriza el calor y reduce la extracción a solo **2 minutos cada hora**, protegiendo el ecosistema térmico del cultivo.
 
 ### 3. Circulación de Aire Ininterrumpida
 El algoritmo destina un canal específico de energía a permanecer encendido de forma ininterrumpida (Todo el día y la noche). En un recinto hermético, el movimiento del aire interno no debe detenerse para garantizar un respiro constante sobre la cara exterior de las hojas (Capa Límite).

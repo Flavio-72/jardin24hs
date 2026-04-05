@@ -6,8 +6,7 @@ int ultimoBoton = -1;
 uint32_t lastUpdate = 0;
 
 // Variables temporales para edición y UI
-int tempValInt = 0;
-float tempValFloat = 0.0;
+int eHora = 0, eMin = 0, eDia = 1, eMes = 1, eAnio = 2024;
 uint32_t pressStart = 0;
 uint32_t lastRepeat = 0;
 bool buttonHeld = false;
@@ -34,11 +33,11 @@ enum EventoBoton {
 enum CampoEdicion {
   FLD_HORA_RTC,
   FLD_MIN_RTC,
+  FLD_DIA_RTC,
+  FLD_MES_RTC,
+  FLD_ANIO_RTC,
   FLD_MODO,
-  FLD_TEMP_MAX,
-  FLD_HUM_MIN,
   FLD_LUZ_ON,
-  FLD_LUZ_OFF,
   NUM_FIELDS
 };
 
@@ -123,13 +122,15 @@ void mostrarMonitoreo() {
     lcd.print(ahora.minute());
     
     lcd.print("  ");
+    const char* diasSemana[] = {"dom", "lun", "mar", "mie", "jue", "vie", "sab"};
+    // Limitamos por seguridad aunque RTClib retorna 0-6
+    lcd.print(diasSemana[ahora.dayOfTheWeek() % 7]);
+    lcd.print(" ");
+    
     if (ahora.day() < 10) lcd.print('0');
     lcd.print(ahora.day()); lcd.print('/');
     if (ahora.month() < 10) lcd.print('0');
-    lcd.print(ahora.month()); lcd.print('/');
-    int anio = ahora.year() % 100;
-    if (anio < 10) lcd.print('0');
-    lcd.print(anio);
+    lcd.print(ahora.month());
     
     lcd.setCursor(0, 1);
     
@@ -175,11 +176,11 @@ void mostrarEditCampo() {
   switch (campoActual) {
     case FLD_HORA_RTC: lcd.print("Config Hora    "); break;
     case FLD_MIN_RTC:  lcd.print("Config Minutos "); break;
+    case FLD_DIA_RTC:  lcd.print("Config Dia     "); break;
+    case FLD_MES_RTC:  lcd.print("Config Mes     "); break;
+    case FLD_ANIO_RTC: lcd.print("Config Anio    "); break;
     case FLD_MODO:     lcd.print("Config Modo    "); break;
-    case FLD_TEMP_MAX: lcd.print("Config T.Max   "); break;
-    case FLD_HUM_MIN:  lcd.print("Config H.Min   "); break;
     case FLD_LUZ_ON:   lcd.print("Config Luz On  "); break;
-    case FLD_LUZ_OFF:  lcd.print("Config Luz Off "); break;
     default: break;
   }
 
@@ -190,34 +191,35 @@ void mostrarEditCampo() {
     switch (campoActual) {
       case FLD_HORA_RTC: lcd.print("__"); break;
       case FLD_MIN_RTC:  lcd.print("__"); break;
+      case FLD_DIA_RTC:  lcd.print("__"); break;
+      case FLD_MES_RTC:  lcd.print("__"); break;
+      case FLD_ANIO_RTC: lcd.print("____"); break;
       case FLD_MODO:     lcd.print("_____"); break;
-      case FLD_TEMP_MAX: lcd.print("__._ C"); break;
-      case FLD_HUM_MIN:  lcd.print("__ %"); break;
       case FLD_LUZ_ON:   lcd.print("__:00"); break;
-      case FLD_LUZ_OFF:  lcd.print("__:00"); break;
       default:           lcd.print("__"); break;
     }
   } else {
     Perfil& p = getPerfilActual();
     switch (campoActual) {
       case FLD_HORA_RTC: 
-        if (tempValInt < 10) lcd.print('0');
-        lcd.print(tempValInt); break;
+        if (eHora < 10) lcd.print('0');
+        lcd.print(eHora); break;
       case FLD_MIN_RTC:
-        if ((int)tempValFloat < 10) lcd.print('0');
-        lcd.print((int)tempValFloat); break;
+        if (eMin < 10) lcd.print('0');
+        lcd.print(eMin); break;
+      case FLD_DIA_RTC:
+        if (eDia < 10) lcd.print('0');
+        lcd.print(eDia); break;
+      case FLD_MES_RTC:
+        if (eMes < 10) lcd.print('0');
+        lcd.print(eMes); break;
+      case FLD_ANIO_RTC:
+        lcd.print(eAnio); break;
       case FLD_MODO:
         lcd.print(config.modoActual == CRECIMIENTO ? "Vege  " : "Flora "); break;
-      case FLD_TEMP_MAX:
-        lcd.print(p.tempMax, 1); lcd.print(" C"); break;
-      case FLD_HUM_MIN:
-        lcd.print(p.humMin, 0); lcd.print(" %"); break;
       case FLD_LUZ_ON:
         if (p.horaOn < 10) lcd.print('0');
         lcd.print(p.horaOn); lcd.print(":00"); break;
-      case FLD_LUZ_OFF:
-        if (p.horaOff < 10) lcd.print('0');
-        lcd.print(p.horaOff); lcd.print(":00"); break;
       default: break;
     }
   }
@@ -252,8 +254,11 @@ void actualizarMenu() {
       modoEdicion = true;
       campoActual = FLD_HORA_RTC;
       DateTime ahora = rtc.now();
-      tempValInt = ahora.hour();
-      tempValFloat = ahora.minute();
+      eHora = ahora.hour();
+      eMin = ahora.minute();
+      eDia = ahora.day();
+      eMes = ahora.month();
+      eAnio = ahora.year();
       lcd.clear();
       delay(200);
     }
@@ -277,25 +282,25 @@ void actualizarMenu() {
       Perfil& p = getPerfilActual();
       if (botonEvento == BTN_ARRIBA) {
         switch (campoActual) {
-          case FLD_HORA_RTC: tempValInt = (tempValInt + 1) % 24; break;
-          case FLD_MIN_RTC:  tempValFloat = (int)(tempValFloat + 1) % 60; break;
+          case FLD_HORA_RTC: eHora = (eHora + 1) % 24; break;
+          case FLD_MIN_RTC:  eMin = (eMin + 1) % 60; break;
+          case FLD_DIA_RTC:  eDia = (eDia % 31) + 1; break;
+          case FLD_MES_RTC:  eMes = (eMes % 12) + 1; break;
+          case FLD_ANIO_RTC: eAnio++; if(eAnio > 2099) eAnio = 2024; break;
           case FLD_MODO:     config.modoActual = (config.modoActual == CRECIMIENTO) ? FLORACION : CRECIMIENTO; break;
-          case FLD_TEMP_MAX: p.tempMax += 0.5; break;
-          case FLD_HUM_MIN:  p.humMin += 1; break;
           case FLD_LUZ_ON:   p.horaOn = (p.horaOn + 1) % 24; break;
-          case FLD_LUZ_OFF:  p.horaOff = (p.horaOff + 1) % 24; break;
           default: break;
         }
       }
       if (botonEvento == BTN_ABAJO) {
         switch (campoActual) {
-          case FLD_HORA_RTC: tempValInt = (tempValInt == 0) ? 23 : tempValInt - 1; break;
-          case FLD_MIN_RTC:  tempValFloat = (int)(tempValFloat == 0) ? 59 : (int)tempValFloat - 1; break;
+          case FLD_HORA_RTC: eHora = (eHora == 0) ? 23 : eHora - 1; break;
+          case FLD_MIN_RTC:  eMin = (eMin == 0) ? 59 : eMin - 1; break;
+          case FLD_DIA_RTC:  eDia = (eDia == 1) ? 31 : eDia - 1; break;
+          case FLD_MES_RTC:  eMes = (eMes == 1) ? 12 : eMes - 1; break;
+          case FLD_ANIO_RTC: eAnio--; if(eAnio < 2024) eAnio = 2099; break;
           case FLD_MODO:     config.modoActual = (config.modoActual == CRECIMIENTO) ? FLORACION : CRECIMIENTO; break;
-          case FLD_TEMP_MAX: p.tempMax -= 0.5; break;
-          case FLD_HUM_MIN:  p.humMin -= 1; break;
           case FLD_LUZ_ON:   p.horaOn = (p.horaOn == 0) ? 23 : p.horaOn - 1; break;
-          case FLD_LUZ_OFF:  p.horaOff = (p.horaOff == 0) ? 23 : p.horaOff - 1; break;
           default: break;
         }
       }
@@ -303,8 +308,17 @@ void actualizarMenu() {
 
     // Guardar y Salir (Solo un clic corto en SELECT)
     if (evento == EV_CLICK && botonEvento == BTN_SELECT) {
-      DateTime ahora = rtc.now();
-      rtc.adjust(DateTime(ahora.year(), ahora.month(), ahora.day(), tempValInt, (int)tempValFloat, 0));
+      // Configuramos el RTC local
+      rtc.adjust(DateTime(eAnio, eMes, eDia, eHora, eMin, 0));
+      
+      // Auto-calcular horaOff según CBD Photoperiods (Experto)
+      Perfil& p = getPerfilActual();
+      if (config.modoActual == CRECIMIENTO) {
+        p.horaOff = (p.horaOn + 18) % 24; // 18hs Luz
+      } else {
+        p.horaOff = (p.horaOn + 12) % 24; // 12hs Luz
+      }
+      
       guardarConfig();
       modoEdicion = false;
       lcd.clear();

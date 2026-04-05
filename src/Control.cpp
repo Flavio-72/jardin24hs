@@ -4,10 +4,12 @@ DHT dht(DHTPIN, DHTTYPE);
 float temperatura = 0.0;
 float humedad = 0.0;
 bool estadoLuz = false;
-uint32_t lastRead = 0;
+uint32_t ultimaLectura = 0;
 
-void inicializarControl() {
+void prepararControl() {
   dht.begin();
+  pinMode(PIN_LUZ, OUTPUT);
+  pinMode(PIN_EXTRACTOR, OUTPUT);
   pinMode(PIN_VENTILADOR_INT, OUTPUT);
   
   // Condición Inicial Segura
@@ -18,17 +20,17 @@ void inicializarControl() {
 
 void actualizarControl() {
   // Leer sensores cada 2 segundos
-  if (millis() - lastRead > 2000) {
+  if (millis() - ultimaLectura > 2000) {
     float t = dht.readTemperature();
     float h = dht.readHumidity();
     
     if (!isnan(t)) temperatura = t;
     if (!isnan(h)) humedad = h;
     
-    lastRead = millis();
+    ultimaLectura = millis();
   }
 
-  Perfil& p = getPerfilActual();
+  PerfilCultivo& p = obtenerPerfilActual();
   DateTime ahora = rtc.now();
   int minActuales = ahora.hour() * 60 + ahora.minute();
   int minOn = p.horaOn * 60 + p.minOn;
@@ -68,6 +70,6 @@ void actualizarControl() {
   }
 }
 
-float getTemperatura() { return temperatura; }
-float getHumedad() { return humedad; }
-bool getEstadoLuz() { return estadoLuz; }
+float obtenerTemperatura() { return temperatura; }
+float obtenerHumedad() { return humedad; }
+bool obtenerEstadoLuz() { return estadoLuz; }

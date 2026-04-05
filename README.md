@@ -1,4 +1,22 @@
-# Jardín 24hs - Controlador Microclima V1.0
+# Jardín 24hs - Controlador Microclima V1.0.2
+
+---
+
+## 📜 Historial de Versiones
+
+### [v1.0.2] - 2026-04-05
+- **REFACTOR**: Traducción integral del código fuente a español (variables, funciones y comentarios).
+- **UX**: Mensajes de sistema y menús 100% en español.
+- **JSON**: El reporte serial de `luz` ahora muestra `"Encendida"` / `"Apagada"` en lugar de `0/1`.
+
+### [v1.0.1] - 2026-04-05
+- **FIX**: Corregido `pinMode` de relés (Luz y Extractor) que impedía la conmutación física.
+- **NEW**: Implementado **Contador de Días de Ciclo** (EEPROM) con edición manual sincronizada al RTC.
+- **NEW**: Agregado **Auto-Home** (Vuelta a pantalla principal tras 10s de inactividad).
+- **UI**: Rotación de 3 pantallas en monitoreo (Hora -> Clima -> Ciclo).
+- **DOC**: Agregado informe de pines (Pinout) detallado.
+
+---
 
 Sistema de control ambiental pasivo-activo diseñado específicamente para optimizar las fases de Crecimiento y Floración de plantas en entornos cerrados (carpas, invernaderos interiores, viveros). Prioriza la lógica biológica, la autonomía ante cortes de energía y una experiencia de usuario simplificada.
 
@@ -35,6 +53,25 @@ El ecosistema es inmune a los apagones repentinos. Al volver la electricidad, el
 
 ### 5. Salida de Datos (Monitoreo Terminal)
 La placa matriz ejecuta informes continuos en segundo plano. Exporta un paquete de texto comprimido tipo JSON cada 15 segundos mediante su cable USB. Esto permite la lectura externa de datos por computadora o abre la puerta a un futuro registro histórico en tarjetas de memoria SD conectadas a una segunda placa principal.
+
+---
+
+## 📋 Informe de Conexiones (Pinout)
+
+Para el montaje del hardware en el Arduino Uno, utiliza el siguiente esquema de pines:
+
+| Componente | Pin Arduino | Función |
+| :--- | :---: | :--- |
+| **Relé Luz** | `13` | Control de iluminación (Lógica Inversa) |
+| **Relé Extractor** | `11` | Extracción de aire / Purga de seguridad |
+| **Relé Ventilador** | `12` | Circulación interna (Encendido 24hs) |
+| **Sensor DHT22** | `2` | Lectura de Temperatura y Humedad |
+| **RTC DS3231** | `SDA / SCL` | Comunicación I2C (Hora en tiempo real) |
+| **LCD RS** | `8` | Registro de Selección LCD |
+| **LCD Enable** | `9` | Habilitación de pulso LCD |
+| **LCD D4-D7** | `4, 5, 6, 7` | Bus de datos del LCD |
+| **LCD Backlight** | `10` | Control de retroiluminación |
+| **Botones Teclado** | `A0` | Lectura analógica de los 5 botones |
 
 ---
 

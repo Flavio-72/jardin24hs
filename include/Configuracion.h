@@ -9,7 +9,7 @@ enum ModoCultivo {
   FLORACION
 };
 
-struct Perfil {
+struct PerfilCultivo {
   uint8_t horaOn;
   uint8_t minOn;
   uint8_t horaOff;
@@ -18,19 +18,20 @@ struct Perfil {
   float humMax;
 };
 
-struct ConfigApp {
-  Perfil vege;
-  Perfil flora;
+struct ConfiguracionApp {
+  PerfilCultivo vege;
+  PerfilCultivo flora;
   ModoCultivo modoActual;
-  uint32_t magic; // Para verificar si la EEPROM tiene datos válidos
+  uint32_t inicioCicloUnix;
+  uint32_t codigoVerificador; // Para verificar si la EEPROM tiene datos válidos
 };
 
-const uint32_t CONFIG_MAGIC = 0xCAFE0003;
+const uint32_t CONFIG_MAGIC = 0xCAFE0004;
 
-extern ConfigApp config;
+extern ConfiguracionApp config;
 
-void cargarConfig();
-void guardarConfig();
-Perfil& getPerfilActual();
+void cargarConfiguracion();
+void guardarConfiguracion();
+PerfilCultivo& obtenerPerfilActual();
 
 #endif

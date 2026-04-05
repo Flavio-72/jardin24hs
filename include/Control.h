@@ -15,11 +15,11 @@
 
 extern RTC_DS3231 rtc;
 
-void inicializarControl();
+void prepararControl();
 void actualizarControl();
 
-float getTemperatura();
-float getHumedad();
-bool getEstadoLuz();
+float obtenerTemperatura();
+float obtenerHumedad();
+bool obtenerEstadoLuz();
 
 #endif

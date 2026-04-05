@@ -21,5 +21,6 @@ void actualizarControl();
 float obtenerTemperatura();
 float obtenerHumedad();
 bool obtenerEstadoLuz();
+bool obtenerEstadoExtractor();
 
 #endif

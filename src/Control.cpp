@@ -73,3 +73,4 @@ void actualizarControl() {
 float obtenerTemperatura() { return temperatura; }
 float obtenerHumedad() { return humedad; }
 bool obtenerEstadoLuz() { return estadoLuz; }
+bool obtenerEstadoExtractor() { return digitalRead(PIN_EXTRACTOR) == LOW; }

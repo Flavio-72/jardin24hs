@@ -16,6 +16,7 @@ void reporteSerial() {
     float t = obtenerTemperatura();
     float h = obtenerHumedad();
     bool luzEncendida = obtenerEstadoLuz();
+    bool extractorEncendido = obtenerEstadoExtractor();
     const char* modo = (config.modoActual == CRECIMIENTO) ? "VEGE" : "FLORA";
     
     // Formato semi-JSON para facilitar log de base de datos futura
@@ -23,9 +24,9 @@ void reporteSerial() {
     int t_int = (int)t; int t_dec = abs((int)(t*10)%10);
     int h_int = (int)h; int h_dec = abs((int)(h*10)%10);
     
-    sprintf(logMsg, "{\"time\":\"20%02d-%02d-%02d %02d:%02d:%02d\",\"temp\":%d.%d,\"hum\":%d.%d,\"luz\":\"%s\",\"modo\":\"%s\"}",
+    sprintf(logMsg, "{\"time\":\"20%02d-%02d-%02d %02d:%02d:%02d\",\"temp\":%d.%d,\"hum\":%d.%d,\"luz\":\"%s\",\"extractor\":\"%s\",\"modo\":\"%s\"}",
             ahora.year() % 100, ahora.month(), ahora.day(), ahora.hour(), ahora.minute(), ahora.second(),
-            t_int, t_dec, h_int, h_dec, (luzEncendida ? "Encendida" : "Apagada"), modo);
+            t_int, t_dec, h_int, h_dec, (luzEncendida ? "Encendida" : "Apagada"), (extractorEncendido ? "Encendida" : "Apagada"), modo);
             
     Serial.println(logMsg);
   }

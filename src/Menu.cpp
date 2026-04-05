@@ -6,6 +6,7 @@ int ultimoBoton = -1;
 uint32_t ultimaActualizacion = 0;
 uint32_t ultimaActividad = 0;
 #define TIEMPO_INACTIVIDAD 10000 // 10 segundos para volver al inicio
+#define TIEMPO_BACKLIGHT   180000 // 3 minutos para apagar backlight
 
 // Variables temporales para edición y UI
 int eHora = 0, eMin = 0, eDia = 1, eMes = 1, eAnio = 2024;
@@ -110,7 +111,7 @@ void inicializarMenu() {
   pinMode(10, OUTPUT);
   digitalWrite(10, HIGH); // Encender Backlight
   lcd.begin(16, 2);
-  lcd.print("Jardin 24hs v1.0.1");
+  lcd.print("Jardin 24hs v1.0.6");
   delay(1000);
   lcd.clear();
   ultimaActividad = millis();
@@ -265,6 +266,12 @@ void actualizarMenu() {
 
   if (evento != EV_NINGUNO) {
     ultimaActividad = millis();
+    digitalWrite(10, HIGH); // Encender backlight ante cualquier evento
+  }
+
+  // Apagado automático de backlight por inactividad (3 min)
+  if (millis() - ultimaActividad > TIEMPO_BACKLIGHT) {
+    digitalWrite(10, LOW);
   }
 
   // Vuelta automática por inactividad

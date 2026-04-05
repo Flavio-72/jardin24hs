@@ -1,8 +1,11 @@
-# Jardín 24hs - Controlador Microclima V1.0.5
+# Jardín 24hs - Controlador Microclima V1.0.6
 
 ---
 
 ## 📜 Historial de Versiones
+
+### [v1.0.6] - 2026-04-05
+- **NEW**: Implementado **Ahorro de Energía LCD**: El backlight se apaga tras 3 minutos de inactividad y se enciende al presionar cualquier botón.
 
 ### [v1.0.5] - 2026-04-05
 - **NEW**: Implementado **Pulso de Respiro** (Renovación forzada de aire) de 5 minutos cada 3 horas para asegurar niveles de CO2.

@@ -15,7 +15,7 @@ struct Perfil {
   uint8_t horaOff;
   uint8_t minOff;
   float tempMax;
-  float humMin;
+  float humMax;
 };
 
 struct ConfigApp {
@@ -25,7 +25,7 @@ struct ConfigApp {
   uint32_t magic; // Para verificar si la EEPROM tiene datos válidos
 };
 
-const uint32_t CONFIG_MAGIC = 0xCAFE0002;
+const uint32_t CONFIG_MAGIC = 0xCAFE0003;
 
 extern ConfigApp config;
 

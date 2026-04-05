@@ -7,8 +7,8 @@ void cargarConfig() {
   
   if (config.magic != CONFIG_MAGIC) {
     // Valores por defecto lógicos para el usuario (reloj)
-    config.vege = {6, 0, 0, 0, 25.0, 60.0};   // 18h luz: Enciende 06:00 / Apaga 00:00
-    config.flora = {6, 0, 18, 0, 23.0, 50.0}; // 12h luz: Enciende 06:00 / Apaga 18:00
+    config.vege = {6, 0, 0, 0, 25.0, 70.0};   // 18h luz: Enciende 06:00 / Apaga 00:00, Limite VPD Vege
+    config.flora = {6, 0, 18, 0, 23.0, 55.0}; // 12h luz: Enciende 06:00 / Apaga 18:00, Limite VPD Flora
     config.modoActual = CRECIMIENTO;
     config.magic = CONFIG_MAGIC;
     guardarConfig();

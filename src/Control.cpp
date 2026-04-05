@@ -10,12 +10,10 @@ void inicializarControl() {
   dht.begin();
   pinMode(PIN_LUZ, OUTPUT);
   pinMode(PIN_EXTRACTOR, OUTPUT);
-  pinMode(PIN_HUMIDIFICADOR, OUTPUT);
   
   // Apagar todo por seguridad al iniciar
   digitalWrite(PIN_LUZ, HIGH); // Asumiendo lógica inversa (relé común)
   digitalWrite(PIN_EXTRACTOR, HIGH);
-  digitalWrite(PIN_HUMIDIFICADOR, HIGH);
 }
 
 void actualizarControl() {
@@ -45,18 +43,18 @@ void actualizarControl() {
 
   digitalWrite(PIN_LUZ, estadoLuz ? LOW : HIGH); // Lógica inversa del relé
 
-  // Lógica de Extracción (Temperatura)
-  if (temperatura > p.tempMax) {
+  // Lógica de Extracción (Temperatura O Humedad)
+  bool tempAlta = (temperatura > p.tempMax);
+  bool humAlta = (humedad > p.humMax);
+  
+  // Condición agresiva: con que una variable viole el umbral, se succiona
+  if (tempAlta || humAlta) {
     digitalWrite(PIN_EXTRACTOR, LOW); // Encender extractor
-  } else if (temperatura < (p.tempMax - 2)) { // Histéresis de 2 grados
-    digitalWrite(PIN_EXTRACTOR, HIGH);
-  }
-
-  // Lógica de Humidificación (Humedad)
-  if (humedad < p.humMin) {
-    digitalWrite(PIN_HUMIDIFICADOR, LOW); // Encender humidificador
-  } else if (humedad > (p.humMin + 5)) { // Histéresis de 5%
-    digitalWrite(PIN_HUMIDIFICADOR, HIGH);
+  } 
+  // Histéresis: Se deben relajar AMBAS variables para detener la extracción.
+  // -2° para temp y -5% para hum.
+  else if (temperatura < (p.tempMax - 2.0) && humedad < (p.humMax - 5.0)) { 
+    digitalWrite(PIN_EXTRACTOR, HIGH); // Apagar
   }
 }
 

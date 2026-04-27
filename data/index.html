@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Microclima V2.0</title>
+  <meta name="description" content="Dashboard de control ambiental Microclima V2.0">
+  <style>
+    /* ======================================
+       Microclima V2.0 — Dashboard Mobile-First
+       Diseño oscuro premium con acentos verdes
+       ====================================== */
+
+    :root {
+      --bg-primary: #0f1419;
+      --bg-card: #1a2332;
+      --bg-card-hover: #1e2940;
+      --text-primary: #e8edf2;
+      --text-secondary: #8899aa;
+      --text-muted: #556677;
+      --accent-green: #22c55e;
+      --accent-green-dim: #16a34a;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-blue: #3b82f6;
+      --border: #2a3a4a;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* --- Header --- */
+    .header {
+      padding: 20px 16px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .header h1 span { color: var(--accent-green); }
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+    .status-dot.offline {
+      background: var(--accent-red);
+      box-shadow: 0 0 8px var(--accent-red);
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* --- Cards --- */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin: 0 16px 14px;
+      transition: background 0.2s;
+    }
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* --- Clima Hero --- */
+    .clima-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 0 16px 14px;
+    }
+    .clima-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      text-align: center;
+    }
+    .clima-valor {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .clima-valor.temp { color: var(--accent-amber); }
+    .clima-valor.hum { color: var(--accent-blue); }
+    .clima-unidad {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+    .clima-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .clima-range {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* --- Time Hero --- */
+    .time-hero {
+      text-align: center;
+      margin: 0 16px 18px;
+    }
+    .time-hero-val {
+      font-size: 3.5rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.05em;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+    .time-hero-sub {
+      font-size: 0.85rem;
+      color: var(--accent-green);
+      font-weight: 600;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .time-hero-sub span { color: var(--text-primary); }
+
+    /* --- Relés --- */
+    .reles-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .rele-item {
+      text-align: center;
+      padding: 12px 4px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+    }
+    .rele-icon { 
+      height: 28px; 
+      margin-bottom: 6px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+    .rele-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+    .rele-estado.on ~ .rele-icon, /* Support logic change if needed */
+    .rele-item.active .rele-icon {
+      color: var(--accent-green);
+    }
+    
+    /* Animación de viento para extractor */
+    @keyframes wind { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+    .wind-active { animation: wind 1.5s ease-in-out infinite; }
+
+    /* Animación de giro para el ventilador */
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .spin-active { animation: spin 1.5s linear infinite; }
+    
+    /* Luz encendida: color ámbar brillante */
+    #cardLuz.active .rele-icon {
+      color: var(--accent-amber);
+      filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+    }
+    
+    .rele-name {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .rele-estado {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .rele-estado.on { color: var(--accent-green); }
+    .rele-estado.off { color: var(--text-muted); }
+
+
+
+    /* --- Control Manual --- */
+    .control-section { margin-top: 6px; }
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .control-row:last-child { border: none; }
+    .control-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .control-btns { display: flex; gap: 6px; }
+    .control-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .control-btn.active {
+      background: var(--accent-green);
+      color: #000;
+      border-color: var(--accent-green);
+    }
+    .control-btn:hover { border-color: var(--accent-green); }
+
+    /* --- Navegación inferior --- */
+    .nav-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+    .nav-item {
+      flex: 1;
+      text-align: center;
+      padding: 8px 4px;
+      margin: 0 4px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .nav-item.active { 
+      color: var(--accent-green); 
+      background: rgba(34, 197, 94, 0.15);
+    }
+    .nav-item-icon { font-size: 1.3rem; margin-bottom: 4px; display: block; }
+
+    /* --- Secciones / Pestañas --- */
+    .section { display: none; padding-bottom: 80px; }
+    .section.active { display: block; }
+
+    /* --- Config Form --- */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .form-select, .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .btn-save {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: var(--accent-green);
+      color: #000;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .btn-save:hover { background: var(--accent-green-dim); }
+
+    /* --- Alertas --- */
+    .alerta-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: var(--radius-sm);
+      border-left: 4px solid var(--accent-amber);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .alerta-item.critica {
+      border-left-color: var(--accent-red);
+      background: rgba(239, 68, 68, 0.08);
+    }
+    .alerta-msg { font-size: 0.85rem; }
+    .alerta-time {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+  <!-- ========== HEADER ========== -->
+  <div class="header">
+    <h1>🌱 <span>Micro</span>clima</h1>
+    <div class="status-dot" id="statusDot" title="Conectado"></div>
+  </div>
+
+  <!-- ========== SECCIÓN: MONITOR ========== -->
+  <div class="section active" id="secMonitor">
+
+    <!-- Hora y Resumen -->
+    <div class="time-hero">
+      <div class="time-hero-val" id="valHora">--:--</div>
+      <div class="time-hero-sub">MODO <span id="valModo">--</span> &nbsp;•&nbsp; DÍA <span id="valDia">--</span></div>
+    </div>
+
+    <!-- Clima -->
+    <div class="clima-grid">
+      <div class="clima-card">
+        <div class="clima-valor temp" id="valTemp">--.-</div>
+        <div class="clima-label">Temperatura <span class="clima-unidad">°C</span></div>
+        <div class="clima-range" id="rangeTemp">máx: --°C</div>
+      </div>
+      <div class="clima-card">
+        <div class="clima-valor hum" id="valHum">--.-</div>
+        <div class="clima-label">Humedad <span class="clima-unidad">%</span></div>
+        <div class="clima-range" id="rangeHum">máx: --%</div>
+      </div>
+    </div>
+
+    <!-- Relés -->
+    <div class="card">
+      <div class="reles-grid">
+        <div class="rele-item" id="cardLuz">
+          <div class="rele-icon" id="iconLuz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></div>
+          <div class="rele-name">Luz</div>
+          <div class="rele-estado off" id="releLuz">--</div>
+        </div>
+        <div class="rele-item" id="cardExt">
+          <div class="rele-icon" id="iconExt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.8 19.6A2 2 0 1 0 14 16H2"/><path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/><path d="M9.8 4.4A2 2 0 1 1 11 8H2"/></svg></div>
+          <div class="rele-name">Extractor</div>
+          <div class="rele-estado off" id="releExt">--</div>
+        </div>
+        <div class="rele-item" id="cardVent">
+          <div class="rele-icon" id="iconVent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/></svg></div>
+          <div class="rele-name">Ventilador</div>
+          <div class="rele-estado off" id="releVent">--</div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- Control Manual -->
+    <div class="card">
+      <div class="card-label">Control Manual</div>
+      <div class="control-section">
+        <div class="control-row">
+          <span class="control-name">Extractor</span>
+          <div class="control-btns" id="btnsExt">
+            <button class="control-btn" data-val="AUTO" onclick="cmdControl('setControlExt','AUTO')">AUTO</button>
+            <button class="control-btn" data-val="ON" onclick="cmdControl('setControlExt','ON')">ON</button>
+            <button class="control-btn" data-val="OFF" onclick="cmdControl('setControlExt','OFF')">OFF</button>
+          </div>
+        </div>
+        <div class="control-row">
+          <span class="control-name">Ventilador</span>
+          <div class="control-btns" id="btnsVent">
+            <button class="control-btn" data-val="AUTO" onclick="cmdControl('setControlVent','AUTO')">AUTO</button>
+            <button class="control-btn" data-val="ON" onclick="cmdControl('setControlVent','ON')">ON</button>
+            <button class="control-btn" data-val="OFF" onclick="cmdControl('setControlVent','OFF')">OFF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SECCIÓN: CONFIG ========== -->
+  <div class="section" id="secConfig">
+    <div class="card">
+      <div class="card-label">Configuración del Cultivo</div>
+      <div class="form-group">
+        <label class="form-label">Modo de Cultivo</label>
+        <select class="form-select" id="cfgModo">
+          <option value="VEGE">Crecimiento (Vegetativo)</option>
+          <option value="FLORA">Floración</option>
+          <option value="PERSONALIZADO">Personalizado</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Temp. Máxima (°C)</label>
+          <input type="number" class="form-input" id="cfgTempMax" step="0.5" min="15" max="40">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hum. Máxima (%)</label>
+          <input type="number" class="form-input" id="cfgHumMax" step="1" min="30" max="95">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Hora Encendido</label>
+          <input type="number" class="form-input" id="cfgHoraOn" min="0" max="23">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora Apagado</label>
+          <input type="number" class="form-input" id="cfgHoraOff" min="0" max="23">
+        </div>
+      </div>
+      <button class="btn-save" onclick="guardarConfig()">💾 Guardar Cambios</button>
+    </div>
+  </div>
+
+  <!-- ========== SECCIÓN: ALERTAS ========== -->
+  <div class="section" id="secAlertas">
+    <div class="card">
+      <div class="card-label">Alertas Activas</div>
+      <div id="listaAlertas">
+        <div class="empty-state">
+          <div class="empty-state-icon">✅</div>
+          <div>Sin alertas activas</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== NAVEGACIÓN INFERIOR ========== -->
+  <div class="nav-bottom">
+    <div class="nav-item active" onclick="cambiarSeccion('secMonitor', this)">
+      <div class="nav-item-icon">📊</div>
+      Monitor
+    </div>
+    <div class="nav-item" onclick="cambiarSeccion('secConfig', this)">
+      <div class="nav-item-icon">⚙️</div>
+      Config
+    </div>
+    <div class="nav-item" onclick="cambiarSeccion('secAlertas', this)">
+      <div class="nav-item-icon">⚠️</div>
+      Alertas
+    </div>
+  </div>
+
+  <!-- ========== JAVASCRIPT ========== -->
+  <script>
+    // --- WebSocket ---
+    let ws = null;
+    let reconectarTimer = null;
+
+    function conectarWS() {
+      const host = window.location.hostname || '192.168.4.1';
+      ws = new WebSocket(`ws://${host}/ws`);
+
+      ws.onopen = () => {
+        document.getElementById('statusDot').classList.remove('offline');
+        console.log('[WS] Conectado');
+      };
+
+      ws.onclose = () => {
+        document.getElementById('statusDot').classList.add('offline');
+        console.log('[WS] Desconectado, reconectando...');
+        reconectarTimer = setTimeout(conectarWS, 3000);
+      };
+
+      ws.onerror = () => ws.close();
+
+      ws.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data);
+          if (d.tipo === 'estado') actualizarUI(d);
+          if (d.tipo === 'alerta') agregarAlerta(d);
+        } catch (err) { console.error('[WS] Parse error:', err); }
+      };
+    }
+
+    // --- Actualizar UI con datos del servidor ---
+    function actualizarUI(d) {
+      // Clima
+      document.getElementById('valTemp').textContent = d.temp.toFixed(1);
+      document.getElementById('valHum').textContent = d.hum.toFixed(1);
+      document.getElementById('rangeTemp').textContent = `máx: ${d.tempMax}°C`;
+      document.getElementById('rangeHum').textContent = `máx: ${d.humMax}%`;
+
+      // Relés
+      setRele('releLuz', d.luz);
+      setRele('releExt', d.ext);
+      setRele('releVent', d.vent);
+
+      // Info
+      document.getElementById('valModo').textContent = d.modo;
+      document.getElementById('valDia').textContent = d.dia;
+      document.getElementById('valHora').textContent = d.hora;
+
+      // Botones de control
+      setActiveBtn('btnsExt', d.controlExt);
+      setActiveBtn('btnsVent', d.controlVent);
+    }
+
+    function setRele(id, on) {
+      const el = document.getElementById(id);
+      el.textContent = on ? 'ON' : 'OFF';
+      el.className = 'rele-estado ' + (on ? 'on' : 'off');
+      
+      // Controlar colores y animaciones del contenedor/icono
+      const cardId = id.replace('rele', 'card');
+      const iconId = id.replace('rele', 'icon');
+      
+      const card = document.getElementById(cardId);
+      if (card) {
+        if (on) card.classList.add('active');
+        else card.classList.remove('active');
+      }
+      
+      const icon = document.getElementById(iconId);
+      if (icon) {
+        if (id === 'releVent') {
+          if (on) icon.classList.add('spin-active');
+          else icon.classList.remove('spin-active');
+        } else if (id === 'releExt') {
+          if (on) icon.classList.add('wind-active');
+          else icon.classList.remove('wind-active');
+        }
+      }
+    }
+
+    function setActiveBtn(containerId, valor) {
+      const btns = document.getElementById(containerId).querySelectorAll('.control-btn');
+      btns.forEach(b => {
+        b.classList.toggle('active', b.dataset.val === valor);
+      });
+    }
+
+    // --- Enviar comandos ---
+    function cmdControl(cmd, valor) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ cmd, valor }));
+      }
+    }
+
+    // --- Configuración ---
+    async function cargarConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const cfg = await res.json();
+
+        document.getElementById('cfgModo').value = cfg.modo;
+
+        const perfil = cfg.modo === 'VEGE' ? cfg.vege : (cfg.modo === 'FLORA' ? cfg.flora : cfg.personalizado);
+        document.getElementById('cfgTempMax').value = perfil.tempMax;
+        document.getElementById('cfgHumMax').value = perfil.humMax;
+        document.getElementById('cfgHoraOn').value = perfil.horaOn;
+        document.getElementById('cfgHoraOff').value = perfil.horaOff;
+        
+        actualizarEstadoHoraOff();
+      } catch (err) { console.error('[Config] Error:', err); }
+    }
+
+    function actualizarEstadoHoraOff() {
+      const modo = document.getElementById('cfgModo').value;
+      const inputOn = document.getElementById('cfgHoraOn');
+      const inputOff = document.getElementById('cfgHoraOff');
+      
+      if (modo === 'VEGE') {
+        inputOff.disabled = true;
+        inputOff.value = (parseInt(inputOn.value || 0) + 18) % 24;
+      } else if (modo === 'FLORA') {
+        inputOff.disabled = true;
+        inputOff.value = (parseInt(inputOn.value || 0) + 12) % 24;
+      } else {
+        inputOff.disabled = false;
+      }
+    }
+
+    document.getElementById('cfgModo').addEventListener('change', actualizarEstadoHoraOff);
+    document.getElementById('cfgHoraOn').addEventListener('input', actualizarEstadoHoraOff);
+
+    async function guardarConfig() {
+      const modo = document.getElementById('cfgModo').value;
+      const perfilKey = modo === 'VEGE' ? 'vege' : (modo === 'FLORA' ? 'flora' : 'personalizado');
+
+      const body = {
+        modo,
+        [perfilKey]: {
+          horaOn: parseInt(document.getElementById('cfgHoraOn').value),
+          horaOff: parseInt(document.getElementById('cfgHoraOff').value),
+          tempMax: parseFloat(document.getElementById('cfgTempMax').value),
+          humMax: parseFloat(document.getElementById('cfgHumMax').value)
+        }
+      };
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (res.ok) {
+          alert('✅ Configuración guardada');
+          cargarConfig();
+        }
+      } catch (err) { console.error('[Config] Save error:', err); }
+    }
+
+    // --- Alertas ---
+    function agregarAlerta(d) {
+      const lista = document.getElementById('listaAlertas');
+      // Limpiar estado vacío si es la primera alerta
+      if (lista.querySelector('.empty-state')) lista.innerHTML = '';
+
+      const div = document.createElement('div');
+      div.className = 'alerta-item' + (d.codigo.includes('TEMP') ? ' critica' : '');
+      div.innerHTML = `<div class="alerta-msg">${d.msg}</div><div class="alerta-time">${new Date().toLocaleTimeString()}</div>`;
+      lista.prepend(div);
+
+      // Máximo 20 alertas visibles
+      while (lista.children.length > 20) lista.removeChild(lista.lastChild);
+    }
+
+    // --- Navegación ---
+    function cambiarSeccion(id, el) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      el.classList.add('active');
+
+      if (id === 'secConfig') cargarConfig();
+    }
+
+    // --- Init ---
+    conectarWS();
+  </script>
+</body>
+</html>

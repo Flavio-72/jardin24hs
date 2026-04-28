@@ -339,6 +339,8 @@
     }
     .empty-state-icon { font-size: 2.5rem; margin-bottom: 10px; }
   </style>
+  <!-- Microclima V2.1: Calendario Styles -->
+  <link rel="stylesheet" href="calendario.css">
 </head>
 <body>
 
@@ -467,6 +469,25 @@
     </div>
   </div>
 
+  <!-- ========== SECCIÓN: CALENDARIO (HISTORIAL) ========== -->
+  <div class="section" id="secCalendario">
+    <div class="card">
+      <div class="card-label" id="calMonthTitle">Cargando...</div>
+      
+      <div class="calendar-header">
+        <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+      </div>
+
+      <div id="calendarContainer" class="calendar-grid-view">
+        <div class="empty-state">
+          <div class="empty-state-icon">⏳</div>
+          <div>Cargando historial...</div>
+        </div>
+      </div>
+      <div id="eventDetails" class="event-details-list"></div>
+    </div>
+  </div>
+
   <!-- ========== NAVEGACIÓN INFERIOR ========== -->
   <div class="nav-bottom">
     <div class="nav-item active" onclick="cambiarSeccion('secMonitor', this)">
@@ -480,6 +501,56 @@
     <div class="nav-item" onclick="cambiarSeccion('secAlertas', this)">
       <div class="nav-item-icon">⚠️</div>
       Alertas
+    </div>
+    <div class="nav-item" onclick="cambiarSeccion('secCalendario', this)">
+      <div class="nav-item-icon">📅</div>
+      Historial
+    </div>
+  </div>
+
+  <!-- ========== V2.1: ELEMENTOS DE CALENDARIO ========== -->
+  <div class="fab-container">
+    <button class="fab-btn" onclick="abrirModalCal()">+</button>
+  </div>
+
+  <div id="modalCal" class="modal-cal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Registrar Acción</h2>
+        <button class="close-btn" onclick="cerrarModalCal()">&times;</button>
+      </div>
+
+      <div class="event-selector">
+        <div class="event-type active" onclick="seleccionarTipo('riego', this)">
+          <span class="event-icon">💧</span>
+          <span class="event-label">Riego</span>
+        </div>
+        <div class="event-type" onclick="seleccionarTipo('fertilizante', this)">
+          <span class="event-icon">🧪</span>
+          <span class="event-label">Ferti</span>
+        </div>
+        <div class="event-type" onclick="seleccionarTipo('micorrizas', this)">
+          <span class="event-icon">🦠</span>
+          <span class="event-label">Micos</span>
+        </div>
+        <div class="event-type" onclick="seleccionarTipo('nota', this)">
+          <span class="event-icon">📝</span>
+          <span class="event-label">Nota</span>
+        </div>
+      </div>
+
+      <div class="volume-control" id="volControl">
+        <button class="vol-btn" onmousedown="startVolChange(event, -100)" onmouseup="stopVolChange()" ontouchstart="startVolChange(event, -100)" ontouchend="stopVolChange()">-</button>
+        <div class="vol-display">
+          <span class="vol-val" id="volDisplay">1000</span>
+          <span class="vol-unit" id="volUnit">ml (total)</span>
+        </div>
+        <button class="vol-btn" onmousedown="startVolChange(event, 100)" onmouseup="stopVolChange()" ontouchstart="startVolChange(event, 100)" ontouchend="stopVolChange()">+</button>
+      </div>
+
+      <textarea class="nota-input" id="calNota" placeholder="Opcional: Detalles del riego, carencias, etc..." rows="3"></textarea>
+
+      <button class="btn-registrar" onclick="registrarEnCalendario()">Guardar en Calendario</button>
     </div>
   </div>
 
@@ -666,10 +737,13 @@
       el.classList.add('active');
 
       if (id === 'secConfig') cargarConfig();
+      if (id === 'secCalendario') cargarHistorial();
     }
 
     // --- Init ---
     conectarWS();
   </script>
+  <!-- Microclima V2.1: Calendario Logic -->
+  <script src="calendario.js"></script>
 </body>
 </html>

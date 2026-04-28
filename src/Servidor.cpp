@@ -21,6 +21,7 @@
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 DNSServer dnsServer;
+Calendario calendario;
 
 static uint32_t ultimoEnvioWS = 0;
 
@@ -237,6 +238,14 @@ void inicializarServidor() {
     }
   });
 
+  // Archivos estáticos del Calendario
+  server.on("/calendario.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(LittleFS, "/calendario.css", "text/css");
+  });
+  server.on("/calendario.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(LittleFS, "/calendario.js", "application/javascript");
+  });
+
   // API: Estado actual
   server.on("/api/estado", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "application/json", construirJsonEstado());
@@ -304,6 +313,29 @@ void inicializarServidor() {
 
         guardarConfiguracion();
         request->send(200, "application/json", construirJsonConfig());
+      });
+
+  // API: Registrar en Calendario
+  server.on(
+      "/api/calendario", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL,
+      [](AsyncWebServerRequest *request, uint8_t *data, size_t len,
+         size_t index, size_t total) {
+        JsonDocument doc;
+        DeserializationError err = deserializeJson(doc, (char *)data);
+        if (err) {
+          request->send(400, "application/json", "{\"error\":\"JSON inválido\"}");
+          return;
+        }
+
+        String tipo = doc["tipo"] | "nota";
+        int ml = doc["ml"] | 0;
+        String nota = doc["nota"] | "";
+
+        if (calendario.registrarEvento(tipo, ml, nota)) {
+          request->send(200, "application/json", "{\"status\":\"ok\"}");
+        } else {
+          request->send(500, "application/json", "{\"error\":\"Error al guardar\"}");
+        }
       });
 
   // WebSocket

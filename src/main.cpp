@@ -99,6 +99,7 @@ void setup() {
 
   // Módulos
   cargarConfiguracion();
+  calendario.begin();
   prepararControl();
   inicializarPantalla();
   inicializarServidor();

@@ -11,6 +11,7 @@
  */
 struct EventoCultivo {
     String tipo;          // "riego", "fertilizante", "micorrizas", "nota"
+    int plantaID;         // 0: General, 1: Genética 1, 2: Genética 2, 3: Genética 3
     int cantidad_ml;      // Volumen en ml (si aplica)
     String descripcion;   // Notas adicionales del usuario
     uint32_t timestamp;   // Fecha y hora del evento
@@ -22,7 +23,7 @@ public:
     bool begin();
     
     // Gestión de eventos
-    bool registrarEvento(String tipo, int ml, String nota);
+    bool registrarEvento(String tipo, int ml, String nota, int plantaID = 0);
     String obtenerEventosMes(int mes, int anio);
     
     // Configuración de UX

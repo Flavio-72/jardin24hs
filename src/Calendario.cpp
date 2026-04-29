@@ -16,8 +16,9 @@ bool Calendario::begin() {
  * @param tipo El tipo de acción (riego, fertilizante, etc.)
  * @param ml Cantidad en mililitros.
  * @param nota Comentario opcional.
+ * @param plantaID ID de la planta (0-3).
  */
-bool Calendario::registrarEvento(String tipo, int ml, String nota) {
+bool Calendario::registrarEvento(String tipo, int ml, String nota, int plantaID) {
     // Obtenemos el tiempo actual (debería estar sincronizado previamente por NTP o RTC)
     time_t now;
     time(&now);
@@ -40,6 +41,7 @@ bool Calendario::registrarEvento(String tipo, int ml, String nota) {
     JsonObject evento = doc["eventos"].add<JsonObject>();
     evento["fecha"] = now;
     evento["tipo"] = tipo;
+    evento["pID"] = plantaID;
     evento["ml"] = ml;
     evento["nota"] = nota;
 

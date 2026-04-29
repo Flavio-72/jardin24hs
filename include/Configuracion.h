@@ -52,6 +52,11 @@ struct ConfiguracionApp {
   PerfilCultivo personalizado;
   ModoCultivo modoActual;
   uint32_t inicioCicloUnix;
+  
+  // Soporte Multi-Genética (20 caracteres + null)
+  char genetica1[21];
+  char genetica2[21];
+  char genetica3[21];
 };
 
 // Perfiles por defecto (biológicamente optimizados)

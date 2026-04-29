@@ -452,6 +452,14 @@
           <input type="number" class="form-input" id="cfgHoraOff" min="0" max="23">
         </div>
       </div>
+      
+      <div class="card-label" style="margin-top:10px">Nombres de Genéticas</div>
+      <div class="form-group">
+        <input type="text" class="form-input" id="cfgGen1" placeholder="Genética 1" style="margin-bottom:8px">
+        <input type="text" class="form-input" id="cfgGen2" placeholder="Genética 2" style="margin-bottom:8px">
+        <input type="text" class="form-input" id="cfgGen3" placeholder="Genética 3">
+      </div>
+      
       <button class="btn-save" onclick="guardarConfig()">💾 Guardar Cambios</button>
     </div>
   </div>
@@ -537,6 +545,13 @@
           <span class="event-icon">📝</span>
           <span class="event-label">Nota</span>
         </div>
+      </div>
+
+      <div class="plant-selector">
+        <div class="plant-opt active" id="pOpt0" onclick="seleccionarPlanta(0)">General</div>
+        <div class="plant-opt" id="pOpt1" onclick="seleccionarPlanta(1)">P1</div>
+        <div class="plant-opt" id="pOpt2" onclick="seleccionarPlanta(2)">P2</div>
+        <div class="plant-opt" id="pOpt3" onclick="seleccionarPlanta(3)">P3</div>
       </div>
 
       <div class="volume-control" id="volControl">
@@ -663,6 +678,15 @@
         document.getElementById('cfgHumMax').value = perfil.humMax;
         document.getElementById('cfgHoraOn').value = perfil.horaOn;
         document.getElementById('cfgHoraOff').value = perfil.horaOff;
+
+        // Genéticas
+        if (cfg.gens) {
+          document.getElementById('cfgGen1').value = cfg.gens[0] || '';
+          document.getElementById('cfgGen2').value = cfg.gens[1] || '';
+          document.getElementById('cfgGen3').value = cfg.gens[2] || '';
+          // Guardar nombres globalmente para el calendario
+          window.nombresGeneticas = cfg.gens;
+        }
         
         actualizarEstadoHoraOff();
       } catch (err) { console.error('[Config] Error:', err); }
@@ -698,7 +722,12 @@
           horaOff: parseInt(document.getElementById('cfgHoraOff').value),
           tempMax: parseFloat(document.getElementById('cfgTempMax').value),
           humMax: parseFloat(document.getElementById('cfgHumMax').value)
-        }
+        },
+        gens: [
+          document.getElementById('cfgGen1').value,
+          document.getElementById('cfgGen2').value,
+          document.getElementById('cfgGen3').value
+        ]
       };
 
       try {

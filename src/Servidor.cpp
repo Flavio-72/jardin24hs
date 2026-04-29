@@ -101,6 +101,12 @@ static String construirJsonConfig() {
   pers["tempMax"] = config.personalizado.tempMax;
   pers["humMax"] = config.personalizado.humMax;
 
+  // Genéticas
+  JsonArray gens = doc["gens"].to<JsonArray>();
+  gens.add(config.genetica1);
+  gens.add(config.genetica2);
+  gens.add(config.genetica3);
+
   String json;
   serializeJson(doc, json);
   return json;
@@ -311,6 +317,14 @@ void inicializarServidor() {
           config.inicioCicloUnix = doc["inicioCicloUnix"];
         }
 
+        // Actualizar Genéticas
+        if (doc["gens"].is<JsonArray>()) {
+          JsonArray gens = doc["gens"];
+          if (gens[0].is<const char*>()) strncpy(config.genetica1, gens[0], 20);
+          if (gens[1].is<const char*>()) strncpy(config.genetica2, gens[1], 20);
+          if (gens[2].is<const char*>()) strncpy(config.genetica3, gens[2], 20);
+        }
+
         guardarConfiguracion();
         request->send(200, "application/json", construirJsonConfig());
       });
@@ -330,8 +344,9 @@ void inicializarServidor() {
         String tipo = doc["tipo"] | "nota";
         int ml = doc["ml"] | 0;
         String nota = doc["nota"] | "";
+        int pID = doc["pID"] | 0;
 
-        if (calendario.registrarEvento(tipo, ml, nota)) {
+        if (calendario.registrarEvento(tipo, ml, nota, pID)) {
           request->send(200, "application/json", "{\"status\":\"ok\"}");
         } else {
           request->send(500, "application/json", "{\"error\":\"Error al guardar\"}");

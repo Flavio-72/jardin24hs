@@ -6,7 +6,8 @@
 let calEstado = {
     tipo: 'riego',
     volumen: 1000,
-    nota: ''
+    nota: '',
+    pID: 0
 };
 
 function initCalendario() {
@@ -15,6 +16,12 @@ function initCalendario() {
 
 function abrirModalCal() {
     document.getElementById('modalCal').style.display = 'flex';
+    // Actualizar nombres de las plantas en el selector
+    if (window.nombresGeneticas) {
+        document.getElementById('pOpt1').textContent = window.nombresGeneticas[0] || 'P1';
+        document.getElementById('pOpt2').textContent = window.nombresGeneticas[1] || 'P2';
+        document.getElementById('pOpt3').textContent = window.nombresGeneticas[2] || 'P3';
+    }
 }
 
 function cerrarModalCal() {
@@ -27,13 +34,22 @@ function seleccionarTipo(tipo, el) {
     document.querySelectorAll('.event-type').forEach(item => item.classList.remove('active'));
     el.classList.add('active');
     
-    // Cambiar etiqueta de unidad según el tipo
+    // Cambiar etiqueta de unidad y valores por defecto según el tipo
     const unitEl = document.getElementById('volUnit');
+    const displayEl = document.getElementById('volDisplay');
+
     if (tipo === 'riego') {
         unitEl.textContent = 'ml (total)';
-    } else if (tipo === 'fertilizante' || tipo === 'micorrizas') {
+        calEstado.volumen = 1000;
+    } else if (tipo === 'fertilizante') {
         unitEl.textContent = 'ml / Litro';
+        calEstado.volumen = 2; // Dosis común
+    } else if (tipo === 'micorrizas') {
+        unitEl.textContent = 'gramos / dosis';
+        calEstado.volumen = 1;
     }
+    
+    displayEl.textContent = calEstado.volumen;
 
     // Si es una nota, ocultar volumen
     const volControl = document.getElementById('volControl');
@@ -46,8 +62,24 @@ function seleccionarTipo(tipo, el) {
     }
 }
 
+function seleccionarPlanta(id) {
+    calEstado.pID = id;
+    document.querySelectorAll('.plant-opt').forEach(opt => opt.classList.remove('active'));
+    document.getElementById(`pOpt${id}`).classList.add('active');
+}
+
 function cambiarVolumen(delta) {
-    calEstado.volumen += delta;
+    // Definir el "paso" (step) según el tipo
+    let paso = 100;
+    if (calEstado.tipo === 'fertilizante' || calEstado.tipo === 'micorrizas') {
+        paso = 1; // De a 1ml o 1g
+    }
+    
+    // Aplicar el delta corregido por el paso
+    // Nota: el delta que viene de los botones es +/- 100, lo normalizamos
+    let direccion = delta > 0 ? 1 : -1;
+    calEstado.volumen += (direccion * paso);
+
     if (calEstado.volumen < 0) calEstado.volumen = 0;
     if (calEstado.volumen > 10000) calEstado.volumen = 10000;
     
@@ -79,7 +111,8 @@ async function registrarEnCalendario() {
     const body = {
         tipo: calEstado.tipo,
         ml: calEstado.tipo === 'nota' ? 0 : calEstado.volumen,
-        nota: nota
+        nota: nota,
+        pID: calEstado.pID
     };
 
     const btn = document.querySelector('.btn-registrar');
@@ -123,6 +156,15 @@ async function cargarHistorial() {
     const anio = ahora.getFullYear();
     
     const container = document.getElementById('calendarContainer');
+    
+    // Asegurar que tenemos los nombres de las genéticas
+    if (!window.nombresGeneticas) {
+        try {
+            const resCfg = await fetch('/api/config');
+            const cfg = await resCfg.json();
+            window.nombresGeneticas = cfg.gens;
+        } catch(e) { console.error("Error cargando nombres", e); }
+    }
     
     try {
         const res = await fetch(`/cal_${anio}_${String(mes).padStart(2, '0')}.json`);
@@ -206,11 +248,20 @@ function mostrarDetallesDia(dia, eventos) {
         item.className = 'historial-item';
         const hora = new Date(e.fecha * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
+        let nombrePlanta = 'General';
+        if (e.pID > 0 && window.nombresGeneticas) {
+            nombrePlanta = window.nombresGeneticas[e.pID - 1] || `Planta ${e.pID}`;
+        }
+
         item.innerHTML = `
             <div class="hist-icon">${iconos[e.tipo] || '•'}</div>
             <div class="hist-info">
-                <div class="hist-tipo">${e.tipo} <span style="float:right; font-size:0.7rem; color:var(--text-muted)">${hora}</span></div>
-                ${e.ml > 0 ? `<div class="hist-val">${e.ml} ${e.tipo === 'riego' ? 'ml total' : 'ml/L'}</div>` : ''}
+                <div class="hist-tipo">
+                    ${e.tipo} 
+                    <span style="font-size:0.7rem; color:var(--accent-blue); margin-left:8px">[${nombrePlanta}]</span>
+                    <span style="float:right; font-size:0.7rem; color:var(--text-muted)">${hora}</span>
+                </div>
+                ${e.ml > 0 ? `<div class="hist-val">${e.ml} ${e.tipo === 'riego' ? 'ml total' : (e.tipo === 'fertilizante' ? 'ml/L' : 'g/dosis')}</div>` : ''}
                 ${e.nota ? `<div class="hist-nota">"${e.nota}"</div>` : ''}
             </div>
         `;

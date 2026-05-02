@@ -317,6 +317,24 @@
     }
     .btn-save:hover { background: var(--accent-green-dim); }
 
+    .btn-reset {
+      width: 100%;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .btn-reset:hover {
+      border-color: var(--accent-amber);
+      color: var(--accent-amber);
+    }
+
     /* --- Alertas --- */
     .alerta-item {
       padding: 12px;
@@ -457,6 +475,7 @@
       </div>
       
       <button class="btn-save" onclick="guardarConfig()">💾 Guardar Cambios</button>
+      <button class="btn-reset" onclick="restablecerDefaults()">↺ Restablecer valores por defecto</button>
     </div>
   </div>
 
@@ -692,6 +711,28 @@
 
     document.getElementById('cfgModo').addEventListener('change', actualizarEstadoHoraOff);
     document.getElementById('cfgHoraOn').addEventListener('input', actualizarEstadoHoraOff);
+
+    // --- Valores por defecto por modo (espejo de Configuracion.h) ---
+    const DEFAULTS = {
+      VEGE:         { horaOn: 6,  horaOff: 0,  tempMax: 28.0, humMax: 70 },
+      FLORA:        { horaOn: 7,  horaOff: 19, tempMax: 26.0, humMax: 55 },
+      PERSONALIZADO:{ horaOn: 8,  horaOff: 20, tempMax: 27.0, humMax: 60 }
+    };
+
+    function restablecerDefaults() {
+      const modo = document.getElementById('cfgModo').value;
+      const d = DEFAULTS[modo];
+      if (!d) return;
+      document.getElementById('cfgTempMax').value = d.tempMax;
+      document.getElementById('cfgHumMax').value  = d.humMax;
+      document.getElementById('cfgHoraOn').value  = d.horaOn;
+      // actualizarEstadoHoraOff() recalcula horaOff en VEGE y FLORA
+      actualizarEstadoHoraOff();
+      // En modo PERSONALIZADO, horaOff no es calculado, lo ponemos directamente
+      if (modo === 'PERSONALIZADO') {
+        document.getElementById('cfgHoraOff').value = d.horaOff;
+      }
+    }
 
     async function guardarConfig() {
       const modo = document.getElementById('cfgModo').value;

@@ -261,6 +261,14 @@ void inicializarServidor() {
     request->send(200, "application/json", construirJsonEstado());
   });
 
+  // API: Historial del calendario (lee NDJSON, devuelve JSON array)
+  server.on("/api/historial", HTTP_GET, [](AsyncWebServerRequest *request) {
+    DateTime ahora = obtenerHoraActual();
+    int mes  = request->hasParam("mes")  ? request->getParam("mes")->value().toInt()  : ahora.month();
+    int anio = request->hasParam("anio") ? request->getParam("anio")->value().toInt() : ahora.year();
+    request->send(200, "application/json", calendario.obtenerEventosMes(mes, anio));
+  });
+
   // API: Configuración actual
   server.on("/api/config", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "application/json", construirJsonConfig());

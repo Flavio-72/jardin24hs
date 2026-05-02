@@ -138,21 +138,23 @@ async function cargarHistorial() {
     const ahora = new Date();
     const mes = ahora.getMonth() + 1;
     const anio = ahora.getFullYear();
-    
+    const cacheKey = `cal_cache_${anio}_${mes}`;
+
     try {
-        const res = await fetch(`/cal_${anio}_${String(mes).padStart(2, '0')}.json`);
+        const res = await fetch(`/api/historial?mes=${mes}&anio=${anio}`);
         let data = { eventos: [] };
         if (res.ok) {
             data = await res.json();
-            localStorage.setItem(`cal_cache_${anio}_${mes}`, JSON.stringify(data));
+            // Guardar copia local para modo offline
+            localStorage.setItem(cacheKey, JSON.stringify(data));
         } else {
-            const cache = localStorage.getItem(`cal_cache_${anio}_${mes}`);
+            const cache = localStorage.getItem(cacheKey);
             if (cache) data = JSON.parse(cache);
         }
         dibujarCalendario(data.eventos);
     } catch (err) {
         console.error('Error al cargar historial:', err);
-        const cache = localStorage.getItem(`cal_cache_${anio}_${mes}`);
+        const cache = localStorage.getItem(cacheKey);
         if (cache) dibujarCalendario(JSON.parse(cache).eventos);
         else dibujarCalendario([]);
     }
@@ -186,7 +188,7 @@ function dibujarCalendario(eventos) {
         if (i === ahora.getDate()) div.classList.add('today');
         
         const tieneEventos = eventos.some(e => {
-            const d = new Date(e.fecha * 1000);
+            const d = new Date(e.f * 1000);
             return d.getDate() === i;
         });
         
@@ -207,7 +209,7 @@ function mostrarDetallesDia(dia, eventos) {
     list.innerHTML = `<h4>Eventos del día ${dia}</h4>`;
     
     const eventosDia = eventos.filter(e => {
-        const d = new Date(e.fecha * 1000);
+        const d = new Date(e.f * 1000);
         return d.getDate() === dia;
     });
 
@@ -221,17 +223,17 @@ function mostrarDetallesDia(dia, eventos) {
     eventosDia.forEach(e => {
         const item = document.createElement('div');
         item.className = 'historial-item';
-        const hora = new Date(e.fecha * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const hora = new Date(e.f * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
         item.innerHTML = `
-            <div class="hist-icon">${iconos[e.tipo] || '•'}</div>
+            <div class="hist-icon">${iconos[e.t] || '•'}</div>
             <div class="hist-info">
                 <div class="hist-tipo">
-                    ${e.tipo} 
+                    ${e.t} 
                     <span style="float:right; font-size:0.7rem; color:var(--text-muted)">${hora}</span>
                 </div>
-                ${e.ml > 0 ? `<div class="hist-val">${e.ml} ${e.tipo === 'riego' ? 'ml total' : (e.tipo === 'fertilizante' ? 'ml/L' : 'g/dosis')}</div>` : ''}
-                ${e.nota ? `<div class="hist-nota">"${e.nota}"</div>` : ''}
+                ${e.ml > 0 ? `<div class="hist-val">${e.ml} ${e.t === 'riego' ? 'ml total' : (e.t === 'fertilizante' ? 'ml/L' : 'g/dosis')}</div>` : ''}
+                ${e.n ? `<div class="hist-nota">"${e.n}"</div>` : ''}
             </div>
         `;
         list.appendChild(item);

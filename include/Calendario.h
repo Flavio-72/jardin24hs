@@ -23,7 +23,7 @@ public:
     bool begin();
     
     // Gestión de eventos
-    bool registrarEvento(String tipo, int ml, String nota, int plantaID = 0);
+    bool registrarEvento(String tipo, int ml, String nota);
     String obtenerEventosMes(int mes, int anio);
     
     // Configuración de UX

@@ -1,13 +1,12 @@
 /* ======================================
    Microclima V2.1 — Lógica de Calendario
-   Factorizado y en Castellano
+   Factorizado y en Castellano - Minimalista
    ====================================== */
 
 let calEstado = {
     tipo: 'riego',
     volumen: 1000,
-    nota: '',
-    pID: 0
+    nota: ''
 };
 
 function initCalendario() {
@@ -16,12 +15,6 @@ function initCalendario() {
 
 function abrirModalCal() {
     document.getElementById('modalCal').style.display = 'flex';
-    // Actualizar nombres de las plantas en el selector
-    if (window.nombresGeneticas) {
-        document.getElementById('pOpt1').textContent = window.nombresGeneticas[0] || 'P1';
-        document.getElementById('pOpt2').textContent = window.nombresGeneticas[1] || 'P2';
-        document.getElementById('pOpt3').textContent = window.nombresGeneticas[2] || 'P3';
-    }
 }
 
 function cerrarModalCal() {
@@ -62,12 +55,6 @@ function seleccionarTipo(tipo, el) {
     }
 }
 
-function seleccionarPlanta(id) {
-    calEstado.pID = id;
-    document.querySelectorAll('.plant-opt').forEach(opt => opt.classList.remove('active'));
-    document.getElementById(`pOpt${id}`).classList.add('active');
-}
-
 function cambiarVolumen(delta) {
     // Definir el "paso" (step) según el tipo
     let paso = 100;
@@ -76,7 +63,6 @@ function cambiarVolumen(delta) {
     }
     
     // Aplicar el delta corregido por el paso
-    // Nota: el delta que viene de los botones es +/- 100, lo normalizamos
     let direccion = delta > 0 ? 1 : -1;
     calEstado.volumen += (direccion * paso);
 
@@ -102,7 +88,6 @@ function stopVolChange() {
     }
 }
 
-// Seguridad global: si se suelta el toque en cualquier parte, detener incremento
 window.addEventListener('mouseup', stopVolChange);
 window.addEventListener('touchend', stopVolChange);
 
@@ -111,8 +96,7 @@ async function registrarEnCalendario() {
     const body = {
         tipo: calEstado.tipo,
         ml: calEstado.tipo === 'nota' ? 0 : calEstado.volumen,
-        nota: nota,
-        pID: calEstado.pID
+        nota: nota
     };
 
     const btn = document.querySelector('.btn-registrar');
@@ -155,27 +139,22 @@ async function cargarHistorial() {
     const mes = ahora.getMonth() + 1;
     const anio = ahora.getFullYear();
     
-    const container = document.getElementById('calendarContainer');
-    
-    // Asegurar que tenemos los nombres de las genéticas
-    if (!window.nombresGeneticas) {
-        try {
-            const resCfg = await fetch('/api/config');
-            const cfg = await resCfg.json();
-            window.nombresGeneticas = cfg.gens;
-        } catch(e) { console.error("Error cargando nombres", e); }
-    }
-    
     try {
         const res = await fetch(`/cal_${anio}_${String(mes).padStart(2, '0')}.json`);
         let data = { eventos: [] };
         if (res.ok) {
             data = await res.json();
+            localStorage.setItem(`cal_cache_${anio}_${mes}`, JSON.stringify(data));
+        } else {
+            const cache = localStorage.getItem(`cal_cache_${anio}_${mes}`);
+            if (cache) data = JSON.parse(cache);
         }
         dibujarCalendario(data.eventos);
     } catch (err) {
         console.error('Error al cargar historial:', err);
-        dibujarCalendario([]);
+        const cache = localStorage.getItem(`cal_cache_${anio}_${mes}`);
+        if (cache) dibujarCalendario(JSON.parse(cache).eventos);
+        else dibujarCalendario([]);
     }
 }
 
@@ -184,19 +163,15 @@ function dibujarCalendario(eventos) {
     const anio = ahora.getFullYear();
     const mes = ahora.getMonth();
     
-    // Título del mes
     const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
     document.getElementById('calMonthTitle').textContent = `${meses[mes]} ${anio}`;
 
     const container = document.getElementById('calendarContainer');
     container.innerHTML = '';
 
-    // Calcular primer día del mes (0=Dom, 1=Lun...)
     let primerDia = new Date(anio, mes, 1).getDay();
-    // Ajustar para que Lunes sea el primer día (Lun=0, Dom=6)
     primerDia = (primerDia === 0) ? 6 : primerDia - 1;
 
-    // Rellenar días vacíos al inicio
     for (let e = 0; e < primerDia; e++) {
         const empty = document.createElement('div');
         empty.className = 'cal-day empty';
@@ -248,17 +223,11 @@ function mostrarDetallesDia(dia, eventos) {
         item.className = 'historial-item';
         const hora = new Date(e.fecha * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
-        let nombrePlanta = 'General';
-        if (e.pID > 0 && window.nombresGeneticas) {
-            nombrePlanta = window.nombresGeneticas[e.pID - 1] || `Planta ${e.pID}`;
-        }
-
         item.innerHTML = `
             <div class="hist-icon">${iconos[e.tipo] || '•'}</div>
             <div class="hist-info">
                 <div class="hist-tipo">
                     ${e.tipo} 
-                    <span style="font-size:0.7rem; color:var(--accent-blue); margin-left:8px">[${nombrePlanta}]</span>
                     <span style="float:right; font-size:0.7rem; color:var(--text-muted)">${hora}</span>
                 </div>
                 ${e.ml > 0 ? `<div class="hist-val">${e.ml} ${e.tipo === 'riego' ? 'ml total' : (e.tipo === 'fertilizante' ? 'ml/L' : 'g/dosis')}</div>` : ''}
@@ -269,7 +238,6 @@ function mostrarDetallesDia(dia, eventos) {
     });
 }
 
-// Cerrar modal al tocar fuera
 window.onclick = function(event) {
     const modal = document.getElementById('modalCal');
     if (event.target == modal) {

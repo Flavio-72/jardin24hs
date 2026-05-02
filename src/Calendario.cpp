@@ -1,4 +1,5 @@
 #include "Calendario.h"
+#include "Configuracion.h"
 #include <time.h>
 
 Calendario::Calendario() {}
@@ -18,16 +19,14 @@ bool Calendario::begin() {
  * @param nota Comentario opcional.
  * @param plantaID ID de la planta (0-3).
  */
-bool Calendario::registrarEvento(String tipo, int ml, String nota, int plantaID) {
-    // Obtenemos el tiempo actual (debería estar sincronizado previamente por NTP o RTC)
-    time_t now;
-    time(&now);
-    struct tm timeinfo;
-    localtime_r(&now, &timeinfo);
+bool Calendario::registrarEvento(String tipo, int ml, String nota) {
+    // Sincronizamos con el RTC centralizado del sistema
+    DateTime ahora = obtenerHoraActual();
+    uint32_t nowUnix = ahora.unixtime();
 
-    // Construir nombre del archivo basado en mes y año
+    // Construir nombre del archivo basado en mes y año del RTC
     char fileName[32];
-    snprintf(fileName, sizeof(fileName), "/cal_%04d_%02d.json", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1);
+    snprintf(fileName, sizeof(fileName), "/cal_%04d_%02d.json", ahora.year(), ahora.month());
 
     JsonDocument doc;
     File file = LittleFS.open(fileName, "r");
@@ -37,19 +36,23 @@ bool Calendario::registrarEvento(String tipo, int ml, String nota, int plantaID)
         file.close();
     }
 
-    // Crear el nuevo objeto de evento de forma legible
+    // Asegurar que exista el array de eventos
+    if (!doc.containsKey("eventos")) {
+        doc["eventos"].to<JsonArray>();
+    }
+
+    // Crear el nuevo objeto de evento
     JsonObject evento = doc["eventos"].add<JsonObject>();
-    evento["fecha"] = now;
+    evento["fecha"] = nowUnix;
     evento["tipo"] = tipo;
-    evento["pID"] = plantaID;
     evento["ml"] = ml;
     evento["nota"] = nota;
 
-    // Guardar el archivo actualizado (formateado para legibilidad humana si se desea)
+    // Guardar el archivo actualizado
     file = LittleFS.open(fileName, "w");
     if (!file) return false;
 
-    serializeJsonPretty(doc, file); // Usamos Pretty para que sea legible al abrir el archivo
+    serializeJsonPretty(doc, file);
     file.close();
 
     Serial.printf("Evento registrado: %s (%d ml) en %s\n", tipo.c_str(), ml, fileName);

@@ -39,17 +39,6 @@ void cargarConfiguracion() {
   config.personalizado.tempMax = prefs.getFloat("pTempMax",  PERFIL_PERS_DEFAULT.tempMax);
   config.personalizado.humMax  = prefs.getFloat("pHumMax",   PERFIL_PERS_DEFAULT.humMax);
 
-  // Cargar Genéticas
-  String g1 = prefs.getString("gen1", "Genética 1");
-  String g2 = prefs.getString("gen2", "Genética 2");
-  String g3 = prefs.getString("gen3", "Genética 3");
-  strncpy(config.genetica1, g1.c_str(), 20);
-  strncpy(config.genetica2, g2.c_str(), 20);
-  strncpy(config.genetica3, g3.c_str(), 20);
-  config.genetica1[20] = '\0';
-  config.genetica2[20] = '\0';
-  config.genetica3[20] = '\0';
-
   prefs.end();
 }
 
@@ -79,11 +68,6 @@ void guardarConfiguracion() {
   prefs.putUChar("pMinOff",  config.personalizado.minOff);
   prefs.putFloat("pTempMax",  config.personalizado.tempMax);
   prefs.putFloat("pHumMax",   config.personalizado.humMax);
-
-  // Guardar Genéticas
-  prefs.putString("gen1", config.genetica1);
-  prefs.putString("gen2", config.genetica2);
-  prefs.putString("gen3", config.genetica3);
 
   prefs.end();
 }

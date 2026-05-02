@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Microclima V2.0</title>
   <meta name="description" content="Dashboard de control ambiental Microclima V2.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f1419">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <style>
     /* ======================================
        Microclima V2.0 — Dashboard Mobile-First
@@ -453,13 +456,6 @@
         </div>
       </div>
       
-      <div class="card-label" style="margin-top:10px">Nombres de Genéticas</div>
-      <div class="form-group">
-        <input type="text" class="form-input" id="cfgGen1" placeholder="Genética 1" style="margin-bottom:8px">
-        <input type="text" class="form-input" id="cfgGen2" placeholder="Genética 2" style="margin-bottom:8px">
-        <input type="text" class="form-input" id="cfgGen3" placeholder="Genética 3">
-      </div>
-      
       <button class="btn-save" onclick="guardarConfig()">💾 Guardar Cambios</button>
     </div>
   </div>
@@ -547,12 +543,7 @@
         </div>
       </div>
 
-      <div class="plant-selector">
-        <div class="plant-opt active" id="pOpt0" onclick="seleccionarPlanta(0)">General</div>
-        <div class="plant-opt" id="pOpt1" onclick="seleccionarPlanta(1)">P1</div>
-        <div class="plant-opt" id="pOpt2" onclick="seleccionarPlanta(2)">P2</div>
-        <div class="plant-opt" id="pOpt3" onclick="seleccionarPlanta(3)">P3</div>
-      </div>
+
 
       <div class="volume-control" id="volControl">
         <button class="vol-btn" onmousedown="startVolChange(event, -100)" onmouseup="stopVolChange()" ontouchstart="startVolChange(event, -100)" ontouchend="stopVolChange()">-</button>
@@ -679,15 +670,6 @@
         document.getElementById('cfgHoraOn').value = perfil.horaOn;
         document.getElementById('cfgHoraOff').value = perfil.horaOff;
 
-        // Genéticas
-        if (cfg.gens) {
-          document.getElementById('cfgGen1').value = cfg.gens[0] || '';
-          document.getElementById('cfgGen2').value = cfg.gens[1] || '';
-          document.getElementById('cfgGen3').value = cfg.gens[2] || '';
-          // Guardar nombres globalmente para el calendario
-          window.nombresGeneticas = cfg.gens;
-        }
-        
         actualizarEstadoHoraOff();
       } catch (err) { console.error('[Config] Error:', err); }
     }
@@ -723,11 +705,7 @@
           tempMax: parseFloat(document.getElementById('cfgTempMax').value),
           humMax: parseFloat(document.getElementById('cfgHumMax').value)
         },
-        gens: [
-          document.getElementById('cfgGen1').value,
-          document.getElementById('cfgGen2').value,
-          document.getElementById('cfgGen3').value
-        ]
+        unixActual: Math.floor(Date.now() / 1000)
       };
 
       try {
@@ -771,6 +749,12 @@
 
     // --- Init ---
     conectarWS();
+    // Sincronización de hora inicial silenciosa
+    fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ unixActual: Math.floor(Date.now() / 1000) })
+    }).catch(e => console.error("Error sinc inicial", e));
   </script>
   <!-- Microclima V2.1: Calendario Logic -->
   <script src="calendario.js"></script>

@@ -101,12 +101,6 @@ static String construirJsonConfig() {
   pers["tempMax"] = config.personalizado.tempMax;
   pers["humMax"] = config.personalizado.humMax;
 
-  // Genéticas
-  JsonArray gens = doc["gens"].to<JsonArray>();
-  gens.add(config.genetica1);
-  gens.add(config.genetica2);
-  gens.add(config.genetica3);
-
   String json;
   serializeJson(doc, json);
   return json;
@@ -231,6 +225,13 @@ void inicializarServidor() {
       return;
     }
 
+    // Si es una petición de datos (JSON) y no existe, devolver 404 real
+    // para que el frontend sepa que no hay datos.
+    if (request->url().endsWith(".json")) {
+      request->send(404, "application/json", "{\"error\":\"Not found\"}");
+      return;
+    }
+
     if (LittleFS.exists("/index.html")) {
       request->send(LittleFS, "/index.html", "text/html");
     } else {
@@ -250,6 +251,9 @@ void inicializarServidor() {
   });
   server.on("/calendario.js", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(LittleFS, "/calendario.js", "application/javascript");
+  });
+  server.on("/manifest.json", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(LittleFS, "/manifest.json", "application/json");
   });
 
   // API: Estado actual
@@ -317,12 +321,9 @@ void inicializarServidor() {
           config.inicioCicloUnix = doc["inicioCicloUnix"];
         }
 
-        // Actualizar Genéticas
-        if (doc["gens"].is<JsonArray>()) {
-          JsonArray gens = doc["gens"];
-          if (gens[0].is<const char*>()) strncpy(config.genetica1, gens[0], 20);
-          if (gens[1].is<const char*>()) strncpy(config.genetica2, gens[1], 20);
-          if (gens[2].is<const char*>()) strncpy(config.genetica3, gens[2], 20);
+        // Sincronizar RTC si viene el tiempo actual del navegador
+        if (doc["unixActual"].is<uint32_t>()) {
+          ajustarHora(doc["unixActual"]);
         }
 
         guardarConfiguracion();
@@ -344,9 +345,8 @@ void inicializarServidor() {
         String tipo = doc["tipo"] | "nota";
         int ml = doc["ml"] | 0;
         String nota = doc["nota"] | "";
-        int pID = doc["pID"] | 0;
 
-        if (calendario.registrarEvento(tipo, ml, nota, pID)) {
+        if (calendario.registrarEvento(tipo, ml, nota)) {
           request->send(200, "application/json", "{\"status\":\"ok\"}");
         } else {
           request->send(500, "application/json", "{\"error\":\"Error al guardar\"}");

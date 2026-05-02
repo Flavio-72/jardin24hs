@@ -52,11 +52,6 @@ struct ConfiguracionApp {
   PerfilCultivo personalizado;
   ModoCultivo modoActual;
   uint32_t inicioCicloUnix;
-  
-  // Soporte Multi-Genética (20 caracteres + null)
-  char genetica1[21];
-  char genetica2[21];
-  char genetica3[21];
 };
 
 // Perfiles por defecto (biológicamente optimizados)
@@ -66,10 +61,12 @@ const PerfilCultivo PERFIL_PERS_DEFAULT  = { 8, 0, 20, 0, 27.0, 60.0 };   // 12h
 
 extern ConfiguracionApp config;
 extern bool rtcConectado;
+extern RTC_DS3231 rtc;
 
 void cargarConfiguracion();
 void guardarConfiguracion();
 PerfilCultivo& obtenerPerfilActual();
 DateTime obtenerHoraActual();
+void ajustarHora(uint32_t ahoraUnix);
 
 #endif

@@ -19,14 +19,25 @@
 
 RTC_DS3231 rtc;
 bool rtcConectado = false;
+uint32_t baseUnix = 1767225600; // Por defecto: 2026-01-01
+uint32_t millisSinc = 0;
+
+void ajustarHora(uint32_t ahoraUnix) {
+  if (rtcConectado) {
+    rtc.adjust(DateTime(ahoraUnix));
+  }
+  baseUnix = ahoraUnix;
+  millisSinc = millis();
+  Serial.printf("[TIME] Hora ajustada a Unix: %u\n", ahoraUnix);
+}
 
 DateTime obtenerHoraActual() {
   if (rtcConectado) {
     return rtc.now();
   } else {
-    // Si no hay RTC, simulamos el tiempo usando millis()
-    // Base: 2026-01-01 00:00:00
-    return DateTime(2026, 1, 1, 0, 0, 0) + TimeSpan(millis() / 1000);
+    // Si no hay RTC, sumamos el tiempo transcurrido desde el último ajuste (o arranque)
+    uint32_t segundosTranscurridos = (millis() - millisSinc) / 1000;
+    return DateTime(baseUnix + segundosTranscurridos);
   }
 }
 

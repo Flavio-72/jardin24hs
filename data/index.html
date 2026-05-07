@@ -473,6 +473,7 @@
       
       <button class="btn-save" onclick="guardarConfig()">Guardar Cambios</button>
       <button class="btn-reset" onclick="restablecerDefaults()">↺ Restablecer valores por defecto</button>
+      <button class="btn-reset" style="border-color: var(--accent-blue); color: var(--accent-blue); margin-top: 20px;" onclick="sincronizarHoraManual()">🕒 Sincronizar Reloj con el Celular</button>
     </div>
   </div>
 
@@ -743,7 +744,7 @@
           tempMax: parseFloat(document.getElementById('cfgTempMax').value),
           humMax: parseFloat(document.getElementById('cfgHumMax').value)
         },
-        unixActual: Math.floor(Date.now() / 1000)
+        unixActual: Math.floor((Date.now() - (new Date().getTimezoneOffset() * 60000)) / 1000)
       };
 
       try {
@@ -787,12 +788,25 @@
 
     // --- Init ---
     conectarWS();
-    // Sincronización de hora inicial silenciosa
+    // Sincronización de hora inicial silenciosa (Local Time)
+    const localUnix = Math.floor((Date.now() - (new Date().getTimezoneOffset() * 60000)) / 1000);
     fetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ unixActual: Math.floor(Date.now() / 1000) })
+      body: JSON.stringify({ unixActual: localUnix })
     }).catch(e => console.error("Error sinc inicial", e));
+
+    async function sincronizarHoraManual() {
+      const localUnix = Math.floor((Date.now() - (new Date().getTimezoneOffset() * 60000)) / 1000);
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ unixActual: localUnix })
+        });
+        if (res.ok) alert('🕒 Reloj sincronizado con la hora del celular');
+      } catch (err) { alert('❌ Error al sincronizar'); }
+    }
   </script>
   <!-- Microclima V2.1: Calendario Logic -->
   <script src="calendario.js"></script>

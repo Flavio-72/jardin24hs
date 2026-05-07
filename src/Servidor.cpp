@@ -58,6 +58,10 @@ static String construirJsonEstado() {
   doc["tempMax"] = p.tempMax;
   doc["humMax"] = p.humMax;
 
+  char bufHorario[16];
+  sprintf(bufHorario, "%02d-%02d", p.horaOn, p.horaOff);
+  doc["horario"] = bufHorario;
+
   String json;
   serializeJson(doc, json);
   return json;

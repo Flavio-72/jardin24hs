@@ -19,7 +19,9 @@ U8G2_SH1106_128X64_NONAME_F_HW_I2C oled(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 static uint8_t pantallaActual = 0;
 static const uint8_t TOTAL_PANTALLAS = 3;
 static uint32_t ultimoCambioPantalla = 0;
-static const uint32_t INTERVALO_ROTACION = 3000; // 3 segundos
+static const uint32_t INTERVALO_CLIMA = 5000;
+static const uint32_t INTERVALO_ESTADO = 4000;
+static const uint32_t INTERVALO_WIFI = 3000;
 
 // --- Indicador de página (3 puntos en esquina inferior derecha) ---
 static void dibujarIndicador(uint8_t activa) {
@@ -33,38 +35,49 @@ static void dibujarIndicador(uint8_t activa) {
 static void dibujarClima() {
   float t = obtenerTemperatura();
   float h = obtenerHumedad();
+  PerfilCultivo &p = obtenerPerfilActual();
 
   char bufTemp[8];
   char bufHum[8];
   dtostrf(t, 4, 1, bufTemp);
   dtostrf(h, 4, 1, bufHum);
 
-  // Etiqueta
+  // Etiqueta y Target Temp (y=10)
   oled.setFont(u8g2_font_6x10_tr);
-  oled.drawStr(0, 8, "TEMPERATURA");
+  oled.drawStr(0, 10, "TEMPERATURA");
+  
+  char bufSet[12];
+  sprintf(bufSet, "SET:%.1f", p.tempMax);
+  uint8_t setW = oled.getStrWidth(bufSet);
+  oled.drawStr(128 - setW, 10, bufSet);
 
-  // Temperatura — fuente mediana-grande (18px, cabe bien)
-  oled.setFont(u8g2_font_logisoso18_tn);
+  // Temperatura — fuente 16px (baseline y=32)
+  oled.setFont(u8g2_font_logisoso16_tn);
   uint8_t tw = oled.getStrWidth(bufTemp);
-  oled.drawStr((128 - tw) / 2 - 8, 30, bufTemp);
+  oled.drawStr((128 - tw) / 2 - 8, 32, bufTemp);
 
   // °C al costado
   oled.setFont(u8g2_font_7x14B_tr);
-  oled.drawStr((128 + tw) / 2 - 4, 24, "\xb0""C");
+  oled.drawStr((128 + tw) / 2 - 4, 26, "\xb0""C");
 
-  // Línea separadora
-  oled.drawHLine(10, 35, 108);
+  // Línea separadora (y=36)
+  oled.drawHLine(10, 36, 108);
 
-  // Humedad abajo, más compacta
+  // Humedad abajo (y=48)
   oled.setFont(u8g2_font_6x10_tr);
   oled.drawStr(0, 48, "HUMEDAD");
+  
+  sprintf(bufSet, "SET:%.0f%%", p.humMax);
+  setW = oled.getStrWidth(bufSet);
+  oled.drawStr(128 - setW, 48, bufSet);
 
-  oled.setFont(u8g2_font_logisoso16_tn);
+  // Humedad — fuente 14px (baseline y=64)
+  oled.setFont(u8g2_font_7x14B_tr);
   uint8_t hw = oled.getStrWidth(bufHum);
-  oled.drawStr(52, 60, bufHum);
+  oled.drawStr((128 - hw) / 2 - 8, 64, bufHum);
 
   oled.setFont(u8g2_font_6x10_tr);
-  oled.drawStr(52 + hw + 2, 60, "%");
+  oled.drawStr((128 + hw) / 2, 64, "%");
 
   dibujarIndicador(0);
 }
@@ -100,14 +113,14 @@ static void dibujarEstado() {
   oled.drawStr(0, 52, bufVent);
 
   // Modo + Día del ciclo
-  const char* modo = (config.modoActual == CRECIMIENTO) ? "VEGE" : "FLORA";
+  const char* modo = (config.modoActual == CRECIMIENTO) ? "VEGE" : (config.modoActual == FLORACION) ? "FLORA" : "PERS";
   int diaCiclo = 0;
   if (config.inicioCicloUnix > 0 && ahora.unixtime() >= config.inicioCicloUnix) {
     diaCiclo = (ahora.unixtime() - config.inicioCicloUnix) / 86400;
   }
 
-  char bufModo[24];
-  sprintf(bufModo, "%s D%d", modo, diaCiclo);
+  char bufModo[16];
+  sprintf(bufModo, "%s", modo);
   oled.setFont(u8g2_font_7x14B_tr);
   oled.drawStr(0, 64, bufModo);
 
@@ -170,9 +183,19 @@ void inicializarPantalla() {
 void actualizarPantalla() {
   if (!oledConectado) return;
 
+  uint32_t intervalo = INTERVALO_CLIMA;
+  if (pantallaActual == 1) intervalo = INTERVALO_ESTADO;
+  if (pantallaActual == 2) intervalo = INTERVALO_WIFI;
+
   // Rotación automática
-  if (millis() - ultimoCambioPantalla >= INTERVALO_ROTACION) {
+  if (millis() - ultimoCambioPantalla >= intervalo) {
     pantallaActual = (pantallaActual + 1) % TOTAL_PANTALLAS;
+    
+    // Si la siguiente pantalla es WiFi (2) pero hay alguien conectado al AP, saltar a la 0
+    if (pantallaActual == 2 && WiFi.softAPgetStationNum() > 0) {
+      pantallaActual = 0;
+    }
+    
     ultimoCambioPantalla = millis();
   }
 

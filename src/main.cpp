@@ -59,21 +59,25 @@ void reporteSerial() {
     diaCiclo = (ahora.unixtime() - config.inicioCicloUnix) / 86400;
   }
 
-  const char *modo = (config.modoActual == CRECIMIENTO) ? "VEGE" : "FLORA";
+  const char *modo = (config.modoActual == CRECIMIENTO)   ? "VEGE"
+                     : (config.modoActual == FLORACION) ? "FLORA"
+                                                       : "PERS";
 
   // JSON compacto por serial
   Serial.printf("{\"time\":\"%04d-%02d-%02d %02d:%02d:%02d\","
                 "\"temp\":%.1f,\"hum\":%.1f,"
+                "\"tMax\":%.1f,\"hMax\":%.1f,"
                 "\"luz\":\"%s\",\"ext\":\"%s\",\"vent\":\"%s\","
                 "\"controlExt\":\"%s\",\"controlVent\":\"%s\","
-                "\"modo\":\"%s\",\"dia\":%d}\n",
+                "\"modo\":\"%s\",\"horario\":\"%02d-%02d\",\"dia\":%d}\n",
                 ahora.year(), ahora.month(), ahora.day(), ahora.hour(),
-                ahora.minute(), ahora.second(), t, h,
+                ahora.minute(), ahora.second(), t, h, p.tempMax, p.humMax,
                 obtenerEstadoLuz() ? "on" : "off",
                 obtenerEstadoExtractor() ? "on" : "off",
                 obtenerEstadoVentilador() ? "on" : "off",
                 nombreModoControl(obtenerControlExt()),
-                nombreModoControl(obtenerControlVent()), modo, diaCiclo);
+                nombreModoControl(obtenerControlVent()), modo, p.horaOn,
+                p.horaOff, diaCiclo);
 }
 
 void setup() {

@@ -1,12 +1,12 @@
 #include "Control.h"
 
-    // ============================================================
-    // Microclima V2.0 — Lógica de Control (ESP32-S3)
-    // Adaptado de V1.0: misma lógica VPD + Pulso Respiro + Winter Pulse
-    // Cambios: pines GPIO nuevos, renombrado a ModoControl, sin LCD
-    // ============================================================
+// ============================================================
+// Microclima V2.0 — Lógica de Control (ESP32-S3)
+// Adaptado de V1.0: misma lógica VPD + Pulso Respiro + Winter Pulse
+// Cambios: pines GPIO nuevos, renombrado a ModoControl, sin LCD
+// ============================================================
 
-    DHT dht(PIN_DHT, DHT22);
+DHT dht(PIN_DHT, DHT22);
 float temperatura = 0.0;
 float humedad = 0.0;
 bool estadoLuz = false;

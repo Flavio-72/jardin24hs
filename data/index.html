@@ -622,7 +622,7 @@
       setRele('releVent', d.vent);
 
       // Info
-      document.getElementById('valModo').textContent = d.modo;
+      document.getElementById('valModo').textContent = d.modo + (d.horario ? ` (${d.horario}hs)` : "");
       document.getElementById('valDia').textContent = d.dia;
       document.getElementById('valHora').textContent = d.hora;
 

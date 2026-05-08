@@ -23,7 +23,7 @@ public:
     bool begin();
     
     // Gestión de eventos
-    bool registrarEvento(String tipo, int ml, String nota);
+    bool registrarEvento(String tipo, int ml, String nota, uint32_t fechaUnix = 0);
     String obtenerEventosMes(int mes, int anio);
     String obtenerRecientes(int cantidad);
     

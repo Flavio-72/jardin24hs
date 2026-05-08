@@ -16,8 +16,13 @@ bool Calendario::begin() {
  *        Una línea JSON por evento — sin releer ni reescribir el archivo.
  *        Formato: {"f":<unix>,"t":"<tipo>","ml":<ml>,"n":"<nota>"}
  */
-bool Calendario::registrarEvento(String tipo, int ml, String nota) {
-    DateTime ahora = obtenerHoraActual();
+bool Calendario::registrarEvento(String tipo, int ml, String nota, uint32_t fechaUnix) {
+    DateTime ahora;
+    if (fechaUnix > 0) {
+        ahora = DateTime(fechaUnix);
+    } else {
+        ahora = obtenerHoraActual();
+    }
 
     // Nombre de archivo por mes: /cal_YYYY_MM.ndjson
     char fileName[36];

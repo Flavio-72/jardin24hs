@@ -13,7 +13,15 @@ function initCalendario() {
     console.log('Calendario inicializado');
 }
 
-function abrirModalCal() {
+function abrirModalCal(dia = null) {
+    const d = new Date();
+    if (dia) d.setDate(dia);
+    
+    const anio = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const diaStr = String(d.getDate()).padStart(2, '0');
+    document.getElementById('calFecha').value = `${anio}-${mes}-${diaStr}`;
+    
     document.getElementById('modalCal').style.display = 'flex';
 }
 
@@ -93,10 +101,20 @@ window.addEventListener('touchend', stopVolChange);
 
 async function registrarEnCalendario() {
     const nota = document.getElementById('calNota').value;
+    const fechaInput = document.getElementById('calFecha').value;
+    let fechaUnix = 0;
+    
+    if (fechaInput) {
+        const [y, m, d] = fechaInput.split('-');
+        const dObj = new Date(y, m - 1, d, 12, 0, 0); // Mediodía para evitar offsets
+        fechaUnix = Math.floor(dObj.getTime() / 1000);
+    }
+
     const body = {
         tipo: calEstado.tipo,
         ml: calEstado.tipo === 'nota' ? 0 : calEstado.volumen,
-        nota: nota
+        nota: nota,
+        fechaUnix: fechaUnix
     };
 
     const btn = document.querySelector('.btn-registrar');
@@ -209,7 +227,10 @@ function dibujarCalendario(eventos) {
 
 function mostrarDetallesDia(dia, eventos) {
     const list = document.getElementById('eventDetails');
-    list.innerHTML = `<h4>Eventos del día ${dia}</h4>`;
+    list.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+        <h4 style="margin:0;">Eventos del día ${dia}</h4>
+        <button onclick="abrirModalCal(${dia})" style="padding:4px 12px; background:var(--accent-green); border:none; border-radius:12px; color:#000; font-weight:bold; font-size:0.75rem; cursor:pointer;">+ Añadir</button>
+    </div>`;
     
     const eventosDia = eventos.filter(e => {
         const d = new Date(e.f * 1000 + new Date().getTimezoneOffset() * 60000);

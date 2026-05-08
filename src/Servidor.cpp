@@ -373,8 +373,9 @@ void inicializarServidor() {
         String tipo = doc["tipo"] | "nota";
         int ml = doc["ml"] | 0;
         String nota = doc["nota"] | "";
+        uint32_t fechaUnix = doc["fechaUnix"] | 0;
 
-        if (calendario.registrarEvento(tipo, ml, nota)) {
+        if (calendario.registrarEvento(tipo, ml, nota, fechaUnix)) {
           ws.textAll("{\"tipo\":\"evento\"}"); 
           request->send(200, "application/json", "{\"status\":\"ok\"}");
         } else {

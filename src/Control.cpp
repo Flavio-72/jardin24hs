@@ -1,4 +1,6 @@
 #include "Control.h"
+#include "Datalogger.h"
+#include <math.h>
 
 // ============================================================
 // Microclima V2.0 — Lógica de Control (ESP32-S3)
@@ -41,6 +43,9 @@ void actualizarControl() {
       temperatura = t;
     if (!isnan(h))
       humedad = h;
+
+    // Registrar en el historial cada 10 min (manejado internamente por datalogger)
+    datalogger.registrar(temperatura, humedad, obtenerVPD());
 
     ultimaLectura = millis();
   }
@@ -110,6 +115,15 @@ void actualizarControl() {
 // --- Getters ---
 float obtenerTemperatura() { return temperatura; }
 float obtenerHumedad() { return humedad; }
+
+float obtenerVPD() {
+  if (temperatura < 5.0 || humedad < 5.0) return 0.0;
+  // VPsat (kPa) = 0.61078 * exp((17.27 * T) / (T + 237.3))
+  float vpsat = 0.61078 * exp((17.27 * temperatura) / (temperatura + 237.3));
+  // VPD = VPsat * (1 - RH / 100)
+  float vpd = vpsat * (1.0 - (humedad / 100.0));
+  return vpd;
+}
 bool obtenerEstadoLuz() { return estadoLuz; }
 bool obtenerEstadoExtractor() { return digitalRead(PIN_EXTRACTOR) == LOW; }
 bool obtenerEstadoVentilador() { return digitalRead(PIN_VENTILADOR) == LOW; }

@@ -6,6 +6,8 @@
 #include <RTClib.h>
 #include <WiFi.h>
 #include <Wire.h>
+#include <LittleFS.h>
+#include "Datalogger.h"
 
 // ============================================================
 // Microclima V2.0 — ESP32-S3 + OLED + Web Dashboard
@@ -33,7 +35,15 @@ void ajustarHora(uint32_t ahoraUnix) {
 
 DateTime obtenerHoraActual() {
   if (rtcConectado) {
-    return rtc.now();
+    DateTime now = rtc.now();
+    // Validación de seguridad: si el RTC devuelve basura (ej. horas > 23),
+    // es que hay ruido en el bus I2C o se desconectó.
+    if (now.hour() > 23 || now.minute() > 59) {
+      Serial.println("[TIME] ERROR: RTC devolvió basura. Usando reloj interno.");
+      uint32_t segundosTranscurridos = (millis() - millisSinc) / 1000;
+      return DateTime(baseUnix + segundosTranscurridos);
+    }
+    return now;
   } else {
     // Si no hay RTC, sumamos el tiempo transcurrido desde el último ajuste (o arranque)
     uint32_t segundosTranscurridos = (millis() - millisSinc) / 1000;
@@ -113,8 +123,13 @@ void setup() {
   }
 
   // Módulos
+  if (!LittleFS.begin(true)) {
+    Serial.println("[FS] ERROR crítico: No se pudo montar LittleFS");
+  }
+  
   cargarConfiguracion();
   calendario.begin();
+  datalogger.begin();
   prepararControl();
   inicializarPantalla();
   inicializarServidor();

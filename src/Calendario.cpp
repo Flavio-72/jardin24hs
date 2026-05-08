@@ -79,3 +79,40 @@ String Calendario::obtenerEventosMes(int mes, int anio) {
     file.close();
     return result;
 }
+
+/**
+ * @brief Obtiene los últimos N eventos del mes actual de forma rápida.
+ */
+String Calendario::obtenerRecientes(int cantidad) {
+    DateTime ahora = obtenerHoraActual();
+    char fileName[36];
+    snprintf(fileName, sizeof(fileName), "/cal_%04d_%02d.ndjson", ahora.year(), ahora.month());
+
+    File file = LittleFS.open(fileName, "r");
+    if (!file) return "{\"eventos\":[]}";
+
+    // Buffer circular para las últimas N líneas
+    String lineas[10]; // Máximo 10 para no saturar RAM
+    if (cantidad > 10) cantidad = 10;
+    
+    int total = 0;
+    while (file.available()) {
+        String l = file.readStringUntil('\n');
+        l.trim();
+        if (l.length() > 5) {
+            lineas[total % cantidad] = l;
+            total++;
+        }
+    }
+    file.close();
+
+    String result = "{\"eventos\":[";
+    int count = (total > cantidad) ? cantidad : total;
+    for (int i = 0; i < count; i++) {
+        if (i > 0) result += ",";
+        int idx = (total - 1 - i) % cantidad;
+        result += lineas[idx];
+    }
+    result += "]}";
+    return result;
+}

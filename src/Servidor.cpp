@@ -1,6 +1,7 @@
 #include "Servidor.h"
 #include "Configuracion.h"
 #include "Control.h"
+#include "Datalogger.h"
 #include <WiFi.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
@@ -33,6 +34,7 @@ static String construirJsonEstado() {
   doc["tipo"] = "estado";
   doc["temp"] = round(obtenerTemperatura() * 10.0) / 10.0;
   doc["hum"] = round(obtenerHumedad() * 10.0) / 10.0;
+  doc["vpd"] = round(obtenerVPD() * 100.0) / 100.0;
   doc["luz"] = obtenerEstadoLuz();
   doc["ext"] = obtenerEstadoExtractor();
   doc["vent"] = obtenerEstadoVentilador();
@@ -277,6 +279,17 @@ void inicializarServidor() {
   server.on("/api/config", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "application/json", construirJsonConfig());
   });
+  
+  // API: Actividad reciente (últimos 3)
+  server.on("/api/recientes", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "application/json", calendario.obtenerRecientes(3));
+  });
+
+  // API: Historial de sensores (Temp/Hum/VPD)
+  server.on("/api/sensor-history", HTTP_GET, [](AsyncWebServerRequest *request) {
+    int horas = request->hasParam("horas") ? request->getParam("horas")->value().toInt() : 24;
+    request->send(200, "application/json", datalogger.obtenerHistoricoJSON(horas));
+  });
 
   // API: Guardar configuración
   server.on(
@@ -359,6 +372,7 @@ void inicializarServidor() {
         String nota = doc["nota"] | "";
 
         if (calendario.registrarEvento(tipo, ml, nota)) {
+          ws.textAll("{\"tipo\":\"evento\"}"); 
           request->send(200, "application/json", "{\"status\":\"ok\"}");
         } else {
           request->send(500, "application/json", "{\"error\":\"Error al guardar\"}");

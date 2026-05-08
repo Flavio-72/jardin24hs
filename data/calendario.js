@@ -113,6 +113,8 @@ async function registrarEnCalendario() {
 
         if (res.ok) {
             btn.textContent = '✅ Registrado';
+            // Refrescar historial inmediatamente
+            cargarHistorial();
             setTimeout(() => {
                 cerrarModalCal();
                 btn.textContent = originalText;
@@ -188,7 +190,8 @@ function dibujarCalendario(eventos) {
         if (i === ahora.getDate()) div.classList.add('today');
         
         const tieneEventos = eventos.some(e => {
-            const d = new Date(e.f * 1000);
+            // Compensar el offset local para que el calendario muestre el día real guardado
+            const d = new Date(e.f * 1000 + new Date().getTimezoneOffset() * 60000);
             return d.getDate() === i;
         });
         
@@ -209,7 +212,7 @@ function mostrarDetallesDia(dia, eventos) {
     list.innerHTML = `<h4>Eventos del día ${dia}</h4>`;
     
     const eventosDia = eventos.filter(e => {
-        const d = new Date(e.f * 1000);
+        const d = new Date(e.f * 1000 + new Date().getTimezoneOffset() * 60000);
         return d.getDate() === dia;
     });
 
@@ -223,7 +226,8 @@ function mostrarDetallesDia(dia, eventos) {
     eventosDia.forEach(e => {
         const item = document.createElement('div');
         item.className = 'historial-item';
-        const hora = new Date(e.f * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dObj = new Date(e.f * 1000 + new Date().getTimezoneOffset() * 60000);
+        const hora = dObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
         item.innerHTML = `
             <div class="hist-icon">${iconos[e.t] || '•'}</div>

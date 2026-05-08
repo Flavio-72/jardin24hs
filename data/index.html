@@ -70,6 +70,32 @@
       50% { opacity: 0.5; }
     }
 
+    /* --- Alert Bell in Header --- */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .alert-bell {
+      position: relative;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    .alert-bell.active { color: var(--accent-amber); }
+    .alert-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: var(--accent-red);
+      color: white;
+      font-size: 0.6rem;
+      padding: 2px 5px;
+      border-radius: 10px;
+      display: none;
+    }
+    .alert-badge.show { display: block; }
+
     /* --- Cards --- */
     .card {
       background: var(--bg-card);
@@ -360,15 +386,22 @@
     }
     .empty-state-icon { font-size: 2.5rem; margin-bottom: 10px; }
   </style>
-  <!-- Microclima V2.1: Calendario Styles -->
   <link rel="stylesheet" href="calendario.css">
+  <!-- Chart.js for Cartesian Graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
   <!-- ========== HEADER ========== -->
   <div class="header">
     <h1>🌱 <span>Micro</span>clima</h1>
-    <div class="status-dot" id="statusDot" title="Conectado"></div>
+    <div class="header-actions">
+      <div class="alert-bell" id="btnAlertas" onclick="cambiarSeccion('secAlertas', this, true)">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="alert-badge" id="alertBadge">0</span>
+      </div>
+      <div class="status-dot" id="statusDot" title="Conectado"></div>
+    </div>
   </div>
 
   <!-- ========== SECCIÓN: MONITOR ========== -->
@@ -391,6 +424,11 @@
         <div class="clima-valor hum" id="valHum">--.-</div>
         <div class="clima-label">Humedad <span class="clima-unidad">%</span></div>
         <div class="clima-range" id="rangeHum">máx: --%</div>
+      </div>
+      <div class="clima-card" style="grid-column: span 2;">
+        <div class="clima-valor" id="valVpd" style="color: var(--accent-green);">--.--</div>
+        <div class="clima-label">VPD (Presión de Vapor) <span class="clima-unidad">kPa</span></div>
+        <div id="vpdStatus" style="font-size: 0.7rem; font-weight: 600; margin-top: 2px;">--</div>
       </div>
     </div>
 
@@ -436,6 +474,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Actividad Reciente -->
+    <div class="card" id="cardRecientes" style="display:none; padding: 15px 20px;">
+      <div class="card-label">Últimos Registros</div>
+      <div id="listaRecientes"></div>
+    </div>
   </div>
 
   <!-- ========== SECCIÓN: CONFIG ========== -->
@@ -449,6 +493,10 @@
           <option value="FLORA">Floración</option>
           <option value="PERSONALIZADO">Personalizado</option>
         </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Día del Ciclo (Actual)</label>
+        <input type="number" class="form-input" id="cfgDia" min="0" max="200" placeholder="Ej: 15">
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -490,6 +538,30 @@
     </div>
   </div>
 
+  </div>
+
+  <!-- ========== SECCIÓN: GRÁFICOS ========== -->
+  <div class="section" id="secGraficos">
+    <div class="card" style="padding: 15px;">
+      <div class="card-label">Historial 24 Horas</div>
+      <div style="height: 250px; margin-bottom: 20px;">
+        <canvas id="chartTempHum"></canvas>
+      </div>
+      <div style="height: 200px;">
+        <canvas id="chartVpd"></canvas>
+      </div>
+    </div>
+    <div class="card" style="padding: 15px; margin-top: -10px;">
+        <div class="card-label">Referencia VPD (kPa)</div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.65rem; text-align: center;">
+            <div style="color: var(--accent-blue);">0.4 - 0.8<br>Bajo</div>
+            <div style="color: var(--accent-green);">0.8 - 1.2<br>Óptimo</div>
+            <div style="color: var(--accent-amber);">1.2 - 1.6<br>Alto</div>
+            <div style="color: var(--accent-red);">> 1.6<br>Crítico</div>
+        </div>
+    </div>
+  </div>
+
   <!-- ========== SECCIÓN: CALENDARIO (HISTORIAL) ========== -->
   <div class="section" id="secCalendario">
     <div class="card">
@@ -511,21 +583,21 @@
 
   <!-- ========== NAVEGACIÓN INFERIOR ========== -->
   <div class="nav-bottom">
-    <div class="nav-item active" onclick="cambiarSeccion('secMonitor', this)">
+    <div class="nav-item" onclick="cambiarSeccion('secMonitor', this)">
       <div class="nav-item-icon">📊</div>
       Monitor
+    </div>
+    <div class="nav-item" onclick="cambiarSeccion('secGraficos', this)">
+      <div class="nav-item-icon">📈</div>
+      Gráficos
+    </div>
+    <div class="nav-item" onclick="cambiarSeccion('secCalendario', this)">
+      <div class="nav-item-icon">📔</div>
+      Diario
     </div>
     <div class="nav-item" onclick="cambiarSeccion('secConfig', this)">
       <div class="nav-item-icon">⚙️</div>
       Config
-    </div>
-    <div class="nav-item" onclick="cambiarSeccion('secAlertas', this)">
-      <div class="nav-item-icon">⚠️</div>
-      Alertas
-    </div>
-    <div class="nav-item" onclick="cambiarSeccion('secCalendario', this)">
-      <div class="nav-item-icon">📅</div>
-      Historial
     </div>
   </div>
 
@@ -605,6 +677,7 @@
           const d = JSON.parse(e.data);
           if (d.tipo === 'estado') actualizarUI(d);
           if (d.tipo === 'alerta') agregarAlerta(d);
+          if (d.tipo === 'evento') actualizarRecientes(); // Trigger reload when event registered
         } catch (err) { console.error('[WS] Parse error:', err); }
       };
     }
@@ -614,6 +687,15 @@
       // Clima
       document.getElementById('valTemp').textContent = d.temp.toFixed(1);
       document.getElementById('valHum').textContent = d.hum.toFixed(1);
+      document.getElementById('valVpd').textContent = d.vpd.toFixed(2);
+      
+      const vpdEl = document.getElementById('vpdStatus');
+      if (d.vpd < 0.4) { vpdEl.textContent = 'TRANSPIRACIÓN BAJA'; vpdEl.style.color = 'var(--accent-blue)'; }
+      else if (d.vpd < 0.8) { vpdEl.textContent = 'RANGO TEMPRANO'; vpdEl.style.color = 'var(--accent-green)'; }
+      else if (d.vpd < 1.2) { vpdEl.textContent = 'ESTADO ÓPTIMO'; vpdEl.style.color = 'var(--accent-green)'; }
+      else if (d.vpd < 1.6) { vpdEl.textContent = 'RANGO ALTO'; vpdEl.style.color = 'var(--accent-amber)'; }
+      else { vpdEl.textContent = 'ESTRÉS HÍDRICO'; vpdEl.style.color = 'var(--accent-red)'; }
+
       document.getElementById('rangeTemp').textContent = `máx: ${d.tempMax}°C`;
       document.getElementById('rangeHum').textContent = `máx: ${d.humMax}%`;
 
@@ -687,6 +769,14 @@
         document.getElementById('cfgHoraOn').value = perfil.horaOn;
         document.getElementById('cfgHoraOff').value = perfil.horaOff;
 
+        // Calcular día del ciclo actual
+        if (cfg.inicioCicloUnix > 0) {
+          const dias = Math.floor((cfg.unixActual - cfg.inicioCicloUnix) / 86400);
+          document.getElementById('cfgDia').value = dias >= 0 ? dias : 0;
+        } else {
+          document.getElementById('cfgDia').value = 0;
+        }
+
         actualizarEstadoHoraOff();
       } catch (err) { console.error('[Config] Error:', err); }
     }
@@ -736,6 +826,10 @@
       const modo = document.getElementById('cfgModo').value;
       const perfilKey = modo === 'VEGE' ? 'vege' : (modo === 'FLORA' ? 'flora' : 'personalizado');
 
+      const diaInput = parseInt(document.getElementById('cfgDia').value || 0);
+      const unixActual = Math.floor((Date.now() - (new Date().getTimezoneOffset() * 60000)) / 1000);
+      const inicioCicloUnix = unixActual - (diaInput * 86400);
+
       const body = {
         modo,
         [perfilKey]: {
@@ -744,7 +838,8 @@
           tempMax: parseFloat(document.getElementById('cfgTempMax').value),
           humMax: parseFloat(document.getElementById('cfgHumMax').value)
         },
-        unixActual: Math.floor((Date.now() - (new Date().getTimezoneOffset() * 60000)) / 1000)
+        inicioCicloUnix,
+        unixActual
       };
 
       try {
@@ -761,33 +856,155 @@
     }
 
     // --- Alertas ---
+    let alertasContador = 0;
     function agregarAlerta(d) {
       const lista = document.getElementById('listaAlertas');
+      const badge = document.getElementById('alertBadge');
+      const bell = document.getElementById('btnAlertas');
+      
       // Limpiar estado vacío si es la primera alerta
       if (lista.querySelector('.empty-state')) lista.innerHTML = '';
 
       const div = document.createElement('div');
-      div.className = 'alerta-item' + (d.codigo.includes('TEMP') ? ' critica' : '');
+      div.className = 'alerta-item' + (d.codigo && d.codigo.includes('TEMP') ? ' critica' : '');
       div.innerHTML = `<div class="alerta-msg">${d.msg}</div><div class="alerta-time">${new Date().toLocaleTimeString()}</div>`;
       lista.prepend(div);
+
+      alertasContador++;
+      badge.textContent = alertasContador;
+      badge.classList.add('show');
+      bell.classList.add('active');
 
       // Máximo 20 alertas visibles
       while (lista.children.length > 20) lista.removeChild(lista.lastChild);
     }
 
+    async function actualizarRecientes() {
+      try {
+        const res = await fetch('/api/recientes');
+        if (!res.ok) return;
+        const data = await res.json();
+        const lista = document.getElementById('listaRecientes');
+        const card = document.getElementById('cardRecientes');
+
+        if (data.eventos && data.eventos.length > 0) {
+          card.style.display = 'block';
+          lista.innerHTML = '';
+          const iconos = { riego: '💧', fertilizante: '🧪', micorrizas: '🦠', nota: '📝' };
+          
+          data.eventos.forEach(e => {
+            const div = document.createElement('div');
+            div.className = 'historial-item';
+            div.style.padding = '8px 0';
+            div.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            if (lista.children.length === 2) div.style.border = 'none';
+
+            const dObj = new Date(e.f * 1000 + new Date().getTimezoneOffset() * 60000);
+            const hora = dObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            div.innerHTML = `
+                <div class="hist-icon" style="min-width:30px">${iconos[e.t] || '•'}</div>
+                <div class="hist-info">
+                    <div class="hist-tipo" style="font-size:0.85rem">${e.t} <span style="float:right; font-size:0.7rem; color:var(--text-muted)">${hora}</span></div>
+                    ${e.ml > 0 ? `<div class="hist-val" style="font-size:0.75rem">${e.ml} ml</div>` : ''}
+                </div>
+            `;
+            lista.appendChild(div);
+          });
+        } else {
+          card.style.display = 'none';
+        }
+      } catch (err) { console.error('[Recientes] Error:', err); }
+    }
+
+    // --- Gráficos ---
+    let chartTH = null;
+    let chartV = null;
+
+    async function cargarGraficos() {
+      try {
+        const res = await fetch('/api/sensor-history?horas=24');
+        const json = await res.json();
+        const raw = json.data || [];
+        
+        const labels = raw.map(d => new Date(d[0] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        const temps = raw.map(d => d[1]);
+        const hums = raw.map(d => d[2]);
+        const vpds = raw.map(d => d[3]);
+
+        if (chartTH) chartTH.destroy();
+        if (chartV) chartV.destroy();
+
+        const ctxTH = document.getElementById('chartTempHum').getContext('2d');
+        chartTH = new Chart(ctxTH, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              { label: 'Temp °C', data: temps, borderColor: '#f59e0b', tension: 0.3, yAxisID: 'y' },
+              { label: 'Hum %', data: hums, borderColor: '#3b82f6', tension: 0.3, yAxisID: 'y1' }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#8899aa', font: { size: 10 } } } },
+            scales: {
+              x: { ticks: { color: '#556677', maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
+              y: { type: 'linear', display: true, position: 'left', grid: { color: '#2a3a4a' }, ticks: { color: '#f59e0b' } },
+              y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#3b82f6' } }
+            }
+          }
+        });
+
+        const ctxV = document.getElementById('chartVpd').getContext('2d');
+        chartV = new Chart(ctxV, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{ label: 'VPD kPa', data: vpds, borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', fill: true, tension: 0.3 }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#8899aa', font: { size: 10 } } } },
+            scales: {
+              x: { ticks: { color: '#556677', maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
+              y: { grid: { color: '#2a3a4a' }, ticks: { color: '#22c55e' } }
+            }
+          }
+        });
+      } catch (err) { console.error('[Charts] Error:', err); }
+    }
+
     // --- Navegación ---
-    function cambiarSeccion(id, el) {
+    function cambiarSeccion(id, el, isHeader = false) {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
       document.getElementById(id).classList.add('active');
-      el.classList.add('active');
+      
+      if (!isHeader) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+      } else {
+        // Al entrar a alertas desde el header, limpiamos el badge
+        document.getElementById('alertBadge').classList.remove('show');
+        document.getElementById('btnAlertas').classList.remove('active');
+        alertasContador = 0;
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      }
 
       if (id === 'secConfig') cargarConfig();
       if (id === 'secCalendario') cargarHistorial();
+      if (id === 'secGraficos') cargarGraficos();
     }
 
     // --- Init ---
     conectarWS();
+    actualizarRecientes();
+    // Activar primer item de la nav (Monitor)
+    const firstNav = document.querySelector('.nav-item');
+    if(firstNav) firstNav.classList.add('active');
+
     // Sincronización de hora inicial silenciosa (Local Time)
     const localUnix = Math.floor((Date.now() - (new Date().getTimezoneOffset() * 60000)) / 1000);
     fetch('/api/config', {

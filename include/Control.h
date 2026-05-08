@@ -21,6 +21,7 @@ void actualizarControl();
 // Lectura de sensores
 float obtenerTemperatura();
 float obtenerHumedad();
+float obtenerVPD();
 
 // Estado de actuadores
 bool obtenerEstadoLuz();

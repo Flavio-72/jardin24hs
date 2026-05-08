@@ -25,6 +25,7 @@ public:
     // Gestión de eventos
     bool registrarEvento(String tipo, int ml, String nota);
     String obtenerEventosMes(int mes, int anio);
+    String obtenerRecientes(int cantidad);
     
     // Configuración de UX
     const int PASO_VOLUMEN_ML = 100;

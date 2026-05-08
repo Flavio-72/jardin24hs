@@ -261,6 +261,9 @@ void inicializarServidor() {
   server.on("/manifest.json", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(LittleFS, "/manifest.json", "application/json");
   });
+  server.on("/chart.min.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(LittleFS, "/chart.min.js", "application/javascript");
+  });
 
   // API: Estado actual
   server.on("/api/estado", HTTP_GET, [](AsyncWebServerRequest *request) {

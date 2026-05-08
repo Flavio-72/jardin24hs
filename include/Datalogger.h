@@ -26,7 +26,7 @@ public:
 private:
     const char* FILE_PATH = "/sensor_log.csv";
     uint32_t ultimoRegistro = 0;
-    const uint32_t INTERVALO_LOG = 600000; // 10 minutos (600,000 ms)
+    const uint32_t INTERVALO_LOG = 30000; // 30 segundos (para debug/monitoreo rápido)
 };
 
 extern Datalogger datalogger;

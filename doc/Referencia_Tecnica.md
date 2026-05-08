@@ -46,4 +46,21 @@ El extractor se activa automáticamente si se cumple cualquiera de estas condici
   - **SSID:** `Microclima`
   - **Pass:** `micro2025`
   - **IP:** `192.168.4.1`
-- **Persistencia:** Los ajustes se guardan en la memoria NVS (Non-Volatile Storage) del ESP32 mediante la librería `Preferences`.
+- **Persistencia:**
+  - **Ajustes:** Memoria NVS (librería `Preferences`).
+  - **Historial (Datalogger):** Archivos CSV mensuales en LittleFS (`/log_YYYY_MM.csv`).
+  - **Calendario (Diario):** Archivos NDJSON mensuales en LittleFS (`/cal_YYYY_MM.ndjson`).
+
+## 5. Almacenamiento de Datos (LittleFS)
+
+El sistema utiliza un sistema de archivos LittleFS (4MB) para almacenamiento histórico:
+- **Sensores:** Registra Temperatura, Humedad y VPD cada 10 minutos (ajustable).
+- **Diario:** Registro persistente de riegos, fertilizaciones y notas.
+- **Gráficos:** El servidor web sirve archivos estáticos (incluyendo Chart.js localmente) para renderizar historiales de 24 horas sin necesidad de internet.
+
+## 6. Interfaz Física (OLED)
+
+La pantalla OLED rota automáticamente cada 3-5 segundos mostrando:
+1. **Clima:** Temperatura y Humedad en caracteres grandes.
+2. **Estado:** Hora RTC, estado de relés, modo activo y día del ciclo.
+3. **WiFi:** SSID e IP (solo si no hay clientes conectados).

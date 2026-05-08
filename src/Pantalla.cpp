@@ -97,9 +97,6 @@ static void dibujarEstado() {
   uint8_t tw = oled.getStrWidth(bufHora);
   oled.drawStr((128 - tw) / 2, 12, bufHora);
 
-  // Línea divisoria
-  oled.drawHLine(0, 15, 128);
-
   // Relés — fuente compacta 6x10
   oled.setFont(u8g2_font_6x10_tr);
   oled.drawStr(0, 23, obtenerEstadoLuz() ? "LUZ: ON" : "LUZ: OFF");

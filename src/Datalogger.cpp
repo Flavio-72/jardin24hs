@@ -20,7 +20,14 @@ void Datalogger::registrar(float temp, float hum, float vpd) {
     if (millis() - ultimoRegistro < INTERVALO_LOG && ultimoRegistro != 0) return;
     
     DateTime ahora = obtenerHoraActual();
-    if (ahora.year() < 2024) return; // Esperar a que el RTC tenga hora válida
+    if (ahora.year() < 2024) {
+        static uint32_t ultimaAdvertencia = 0;
+        if (millis() - ultimaAdvertencia > 60000) {
+            Serial.printf("[LOG] Salto registro: Año inválido (%d). Sincronice hora.\n", ahora.year());
+            ultimaAdvertencia = millis();
+        }
+        return;
+    }
 
     char fileName[32];
     snprintf(fileName, sizeof(fileName), "/log_%04d_%02d.csv", ahora.year(), ahora.month());
@@ -42,6 +49,7 @@ void Datalogger::registrar(float temp, float hum, float vpd) {
 String Datalogger::obtenerHistoricoJSON(int horas) {
     DateTime ahora = obtenerHoraActual();
     uint32_t limite = ahora.unixtime() - (horas * 3600);
+    int totalEncontrados = 0;
     
     JsonDocument doc;
     JsonArray data = doc["data"].to<JsonArray>();
@@ -57,7 +65,10 @@ String Datalogger::obtenerHistoricoJSON(int horas) {
     snprintf(files[0], 32, "/log_%04d_%02d.csv", aAnt, mAnt);
 
     for (int i = 0; i < 2; i++) {
-        if (!LittleFS.exists(files[i])) continue;
+        if (!LittleFS.exists(files[i])) {
+            if (i == 1) Serial.printf("[LOG] Archivo actual %s no encontrado\n", files[i]);
+            continue;
+        }
         
         File file = LittleFS.open(files[i], "r");
         if (!file) continue;
@@ -86,10 +97,12 @@ String Datalogger::obtenerHistoricoJSON(int horas) {
             entry.add(t);
             entry.add(h);
             entry.add(v);
+            totalEncontrados++;
         }
         file.close();
     }
 
+    Serial.printf("[LOG] Historico: %d puntos encontrados en ultimas %d hs\n", totalEncontrados, horas);
     String result;
     serializeJson(doc, result);
     return result;

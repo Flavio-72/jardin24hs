@@ -387,8 +387,8 @@
     .empty-state-icon { font-size: 2.5rem; margin-bottom: 10px; }
   </style>
   <link rel="stylesheet" href="calendario.css">
-  <!-- Chart.js for Cartesian Graphs -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js local (Indispensable para modo AP sin Internet) -->
+  <script src="chart.min.js"></script>
 </head>
 <body>
 
@@ -927,6 +927,16 @@
         const json = await res.json();
         const raw = json.data || [];
         
+        if (typeof Chart === 'undefined') {
+          console.error('[Charts] Chart.js no cargado. Suba chart.min.js a LittleFS.');
+          const ctxTH = document.getElementById('chartTempHum').getContext('2d');
+          ctxTH.font = '14px sans-serif';
+          ctxTH.fillStyle = '#8899aa';
+          ctxTH.textAlign = 'center';
+          ctxTH.fillText('Chart.js no cargado (Offline)', 150, 100);
+          return;
+        }
+
         const labels = raw.map(d => new Date(d[0] * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         const temps = raw.map(d => d[1]);
         const hums = raw.map(d => d[2]);

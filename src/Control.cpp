@@ -44,7 +44,8 @@ void actualizarControl() {
     if (!isnan(h))
       humedad = h;
 
-    // Registrar en el historial cada 10 min (manejado internamente por datalogger)
+    // Registrar en el historial cada 10 min (manejado internamente por
+    // datalogger)
     datalogger.registrar(temperatura, humedad, obtenerVPD());
 
     ultimaLectura = millis();
@@ -89,8 +90,16 @@ void actualizarControl() {
   } else if (controlExt == C_OFF) {
     digitalWrite(PIN_EXTRACTOR, HIGH); // Forzado OFF
   } else {
-    // Lógica Automática: VPD + Pulso de Respiro + Protección Invierno
-    if (temperatura < 18.0) {
+    // Lógica Automática: Humedad Crítica + Pulso de Respiro + Protección Invierno
+    bool tempAlta = (temperatura > p.tempMax);
+    bool humAlta = (humedad > p.humMax);
+    bool pulsoRespiro = (ahora.hour() % 3 == 0 && ahora.minute() < 5);
+    
+    // Histéresis: Evitar que el relé prenda y apague por variaciones de 0.1% cuando hace frío
+    bool extraccionActiva = (digitalRead(PIN_EXTRACTOR) == LOW);
+    bool prioridadHumedad = humAlta || (extraccionActiva && humedad > (p.humMax - 5.0));
+
+    if (temperatura < 18.0 && !prioridadHumedad) {
       // Winter Pulse: 2 min cada hora (protección térmica)
       if (ahora.minute() < 2) {
         digitalWrite(PIN_EXTRACTOR, LOW);
@@ -98,10 +107,6 @@ void actualizarControl() {
         digitalWrite(PIN_EXTRACTOR, HIGH);
       }
     } else {
-      bool tempAlta = (temperatura > p.tempMax);
-      bool humAlta = (humedad > p.humMax);
-      bool pulsoRespiro = (ahora.hour() % 3 == 0 && ahora.minute() < 5);
-
       if (tempAlta || humAlta || pulsoRespiro) {
         digitalWrite(PIN_EXTRACTOR, LOW);
       } else if (!pulsoRespiro && temperatura < (p.tempMax - 2.0) &&
@@ -117,7 +122,8 @@ float obtenerTemperatura() { return temperatura; }
 float obtenerHumedad() { return humedad; }
 
 float obtenerVPD() {
-  if (temperatura < 5.0 || humedad < 5.0) return 0.0;
+  if (temperatura < 5.0 || humedad < 5.0)
+    return 0.0;
   // VPsat (kPa) = 0.61078 * exp((17.27 * T) / (T + 237.3))
   float vpsat = 0.61078 * exp((17.27 * temperatura) / (temperatura + 237.3));
   // VPD = VPsat * (1 - RH / 100)

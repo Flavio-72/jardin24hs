@@ -13,6 +13,6 @@ extern Calendario calendario;
 
 void inicializarServidor();
 void enviarEstadoWebSocket();  // Llamar cada ~2 seg desde loop
-void procesarDNS();            // Llamar en cada loop() para captive portal
+void procesarRed();            // Llamar en cada loop() para captive portal y OTA
 
 #endif

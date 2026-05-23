@@ -23,13 +23,13 @@ static const uint32_t INTERVALO_CLIMA = 5000;
 static const uint32_t INTERVALO_ESTADO = 4000;
 static const uint32_t INTERVALO_WIFI = 3000;
 
-// --- Indicador de página (3 puntos en esquina inferior derecha) ---
+// --- Indicador de página (3 puntos en esquina superior derecha) ---
 static void dibujarIndicador(uint8_t activa) {
   for (uint8_t i = 0; i < TOTAL_PANTALLAS; i++) {
     if (i == activa)
-      oled.drawDisc(110 + i * 7, 62, 2);
+      oled.drawDisc(110 + i * 7, 8, 2);
     else
-      oled.drawCircle(110 + i * 7, 62, 1);
+      oled.drawCircle(110 + i * 7, 8, 1);
   }
 }
 
@@ -64,7 +64,7 @@ static void dibujarClima() {
 
   // Humedad abajo (y=48)
   oled.setFont(u8g2_font_6x10_tr);
-  oled.drawStr(0, 48, "HUM");
+  oled.drawStr(0, 48, "HUMEDAD");
 
   // Humedad — fuente grande (baseline y=64)
   oled.setFont(

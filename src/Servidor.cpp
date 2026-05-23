@@ -7,6 +7,7 @@
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <ArduinoOTA.h>
 
 // ============================================================
 // Microclima V2.0 — Servidor Web + WebSocket
@@ -387,6 +388,36 @@ void inicializarServidor() {
   ws.onEvent(onWebSocketEvent);
   server.addHandler(&ws);
 
+  // --- Configuración OTA ---
+  ArduinoOTA.setHostname("Microclima-V2");
+  // Opcional: ArduinoOTA.setPassword("admin123");
+
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+      type = "sketch";
+    } else { // U_SPIFFS / U_LITTLEFS
+      type = "filesystem";
+    }
+    Serial.println("[OTA] Iniciando actualización " + type);
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\n[OTA] Finalizado");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("[OTA] Progreso: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("[OTA] Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  ArduinoOTA.begin();
+  Serial.println("[OTA] Servicio Over-The-Air iniciado");
+
   server.begin();
   Serial.println("[HTTP] Servidor iniciado en puerto 80");
 }
@@ -405,7 +436,8 @@ void enviarEstadoWebSocket() {
   ws.cleanupClients();
 }
 
-// --- Procesar DNS captive portal (llamar en cada loop) ---
-void procesarDNS() {
+// --- Procesar DNS captive portal y OTA (llamar en cada loop) ---
+void procesarRed() {
   dnsServer.processNextRequest();
+  ArduinoOTA.handle();
 }

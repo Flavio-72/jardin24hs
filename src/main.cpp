@@ -1,13 +1,13 @@
 #include "Configuracion.h"
 #include "Control.h"
+#include "Datalogger.h"
 #include "Pantalla.h"
 #include "Servidor.h"
 #include <Arduino.h>
+#include <LittleFS.h>
 #include <RTClib.h>
 #include <WiFi.h>
 #include <Wire.h>
-#include <LittleFS.h>
-#include "Datalogger.h"
 
 // ============================================================
 // Microclima V2.0 — ESP32-S3 + OLED + Web Dashboard
@@ -39,13 +39,15 @@ DateTime obtenerHoraActual() {
     // Validación de seguridad: si el RTC devuelve basura (ej. horas > 23),
     // es que hay ruido en el bus I2C o se desconectó.
     if (now.hour() > 23 || now.minute() > 59) {
-      Serial.println("[TIME] ERROR: RTC devolvió basura. Usando reloj interno.");
+      Serial.println(
+          "[TIME] ERROR: RTC devolvió basura. Usando reloj interno.");
       uint32_t segundosTranscurridos = (millis() - millisSinc) / 1000;
       return DateTime(baseUnix + segundosTranscurridos);
     }
     return now;
   } else {
-    // Si no hay RTC, sumamos el tiempo transcurrido desde el último ajuste (o arranque)
+    // Si no hay RTC, sumamos el tiempo transcurrido desde el último ajuste (o
+    // arranque)
     uint32_t segundosTranscurridos = (millis() - millisSinc) / 1000;
     return DateTime(baseUnix + segundosTranscurridos);
   }
@@ -69,9 +71,9 @@ void reporteSerial() {
     diaCiclo = (ahora.unixtime() - config.inicioCicloUnix) / 86400;
   }
 
-  const char *modo = (config.modoActual == CRECIMIENTO)   ? "VEGE"
+  const char *modo = (config.modoActual == CRECIMIENTO) ? "VEGE"
                      : (config.modoActual == FLORACION) ? "FLORA"
-                                                       : "PERS";
+                                                        : "PERS";
 
   // JSON compacto por serial
   Serial.printf("{\"time\":\"%04d-%02d-%02d %02d:%02d:%02d\","
@@ -126,7 +128,7 @@ void setup() {
   if (!LittleFS.begin(true)) {
     Serial.println("[FS] ERROR crítico: No se pudo montar LittleFS");
   }
-  
+
   cargarConfiguracion();
   calendario.begin();
   datalogger.begin();
@@ -136,6 +138,7 @@ void setup() {
 
   Serial.println("========================================");
   Serial.println("  Microclima V2.0 — ESP32-S3 Iniciado  ");
+  Serial.println("  OTA Funcionando                      ");
   Serial.println("========================================");
   Serial.printf("  WiFi AP: %s\n", WIFI_AP_SSID);
   Serial.printf("  IP: %s\n", WiFi.softAPIP().toString().c_str());
@@ -143,7 +146,7 @@ void setup() {
 }
 
 void loop() {
-  procesarDNS(); // Captive portal DNS (rápido, sin bloqueos)
+  procesarRed(); // Captive portal DNS y OTA (rápido, sin bloqueos)
 
   static uint32_t ultimoTick = 0;
   // Actualizamos hardware solo 1 vez por segundo

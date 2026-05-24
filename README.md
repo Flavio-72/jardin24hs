@@ -4,6 +4,12 @@
 
 ## 📜 Historial de Versiones
 
+### [v2.1.0] - 2026-05-24 — **Mejoras UX Mobile-First y Minimalismo**
+- **UX**: Ajuste de padding y tipografías en widgets de clima y relés para compactar la interfaz y evitar scroll vertical.
+- **UX**: Limpieza visual (eliminación de guía de colores VPD y de últimos registros en Monitor).
+- **UX**: Nuevos iconos de navegación inferior (📺 Monitor, 📈 Gráficos, 📆 Diario, ⚙️ Config).
+- **Diario**: Rediseño minimalista. Eliminación de opción "Micorrizas". El calendario ahora muestra los registros del día actual por defecto con acceso rápido al botón de añadir.
+
 ### [v2.0.0] - 2026-04-23 — **Migración ESP32-S3**
 - **BREAKING**: Migración completa de Arduino Uno a **ESP32-S3** (Waveshare ESP32-S3-Touch-LCD-2).
 - **NEW**: **Dashboard Web** — Interfaz mobile-first accesible desde el celular via WiFi AP.

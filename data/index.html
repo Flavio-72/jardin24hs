@@ -125,11 +125,11 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 10px 14px;
+      padding: 6px 8px;
       text-align: center;
     }
     .clima-valor {
-      font-size: 2rem;
+      font-size: 1.3rem;
       font-weight: 700;
       letter-spacing: -0.03em;
       line-height: 1;
@@ -137,7 +137,7 @@
     .clima-valor.temp { color: var(--accent-amber); }
     .clima-valor.hum { color: var(--accent-blue); }
     .clima-unidad {
-      font-size: 1rem;
+      font-size: 0.85rem;
       color: var(--text-secondary);
       font-weight: 400;
     }
@@ -158,7 +158,7 @@
       margin: 0 16px 12px;
     }
     .time-hero-val {
-      font-size: 3rem;
+      font-size: 2.5rem;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.05em;
@@ -183,7 +183,7 @@
     }
     .rele-item {
       text-align: center;
-      padding: 8px 4px;
+      padding: 4px 4px;
       border-radius: var(--radius-sm);
       background: rgba(255,255,255,0.03);
       border: 1px solid var(--border);
@@ -386,9 +386,9 @@
     }
     .empty-state-icon { font-size: 2.5rem; margin-bottom: 10px; }
   </style>
-  <link rel="stylesheet" href="calendario.css">
+  <link rel="stylesheet" href="calendario.css?v=5">
   <!-- Chart.js local (Indispensable para modo AP sin Internet) -->
-  <script src="chart.min.js"></script>
+  <script src="chart.min.js?v=5"></script>
 </head>
 <body>
 
@@ -475,11 +475,7 @@
       </div>
     </div>
 
-    <!-- Actividad Reciente -->
-    <div class="card" id="cardRecientes" style="display:none; padding: 15px 20px;">
-      <div class="card-label">Últimos Registros</div>
-      <div id="listaRecientes"></div>
-    </div>
+
   </div>
 
   <!-- ========== SECCIÓN: CONFIG ========== -->
@@ -551,15 +547,7 @@
         <canvas id="chartVpd"></canvas>
       </div>
     </div>
-    <div class="card" style="padding: 15px; margin-top: -10px;">
-        <div class="card-label">Referencia VPD (kPa)</div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.65rem; text-align: center;">
-            <div style="color: var(--accent-blue);">0.4 - 0.8<br>Bajo</div>
-            <div style="color: var(--accent-green);">0.8 - 1.2<br>Óptimo</div>
-            <div style="color: var(--accent-amber);">1.2 - 1.6<br>Alto</div>
-            <div style="color: var(--accent-red);">> 1.6<br>Crítico</div>
-        </div>
-    </div>
+
   </div>
 
   <!-- ========== SECCIÓN: CALENDARIO (HISTORIAL) ========== -->
@@ -568,7 +556,7 @@
       <div class="card-label" id="calMonthTitle">Cargando...</div>
       
       <div class="calendar-header">
-        <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+        <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span>
       </div>
 
       <div id="calendarContainer" class="calendar-grid-view">
@@ -577,6 +565,7 @@
           <div>Cargando historial...</div>
         </div>
       </div>
+      <div id="calChipFecha" class="cal-chip-fecha"></div>
       <div id="eventDetails" class="event-details-list"></div>
     </div>
   </div>
@@ -584,28 +573,24 @@
   <!-- ========== NAVEGACIÓN INFERIOR ========== -->
   <div class="nav-bottom">
     <div class="nav-item" onclick="cambiarSeccion('secMonitor', this)">
-      <div class="nav-item-icon">📊</div>
+      <div class="nav-item-icon">&#x1F4FA;</div>
       Monitor
     </div>
     <div class="nav-item" onclick="cambiarSeccion('secGraficos', this)">
-      <div class="nav-item-icon">📈</div>
+      <div class="nav-item-icon">&#x1F4C8;</div>
       Gráficos
     </div>
     <div class="nav-item" onclick="cambiarSeccion('secCalendario', this)">
-      <div class="nav-item-icon">📔</div>
+      <div class="nav-item-icon">&#x1F4C6;</div>
       Diario
     </div>
     <div class="nav-item" onclick="cambiarSeccion('secConfig', this)">
-      <div class="nav-item-icon">⚙️</div>
+      <div class="nav-item-icon">&#x2699;&#xFE0F;</div>
       Config
     </div>
   </div>
 
   <!-- ========== V2.1: ELEMENTOS DE CALENDARIO ========== -->
-  <div class="fab-container">
-    <button class="fab-btn" onclick="abrirModalCal()">+</button>
-  </div>
-
   <div id="modalCal" class="modal-cal">
     <div class="modal-content">
       <div class="modal-header">
@@ -615,19 +600,16 @@
 
       <div class="event-selector">
         <div class="event-type active" onclick="seleccionarTipo('riego', this)">
-          <span class="event-icon">💧</span>
+          <span class="event-icon">&#x1F4A7;</span>
           <span class="event-label">Riego</span>
         </div>
         <div class="event-type" onclick="seleccionarTipo('fertilizante', this)">
-          <span class="event-icon">🧪</span>
+          <span class="event-icon">&#x1F9EA;</span>
           <span class="event-label">Ferti</span>
         </div>
-        <div class="event-type" onclick="seleccionarTipo('micorrizas', this)">
-          <span class="event-icon">🦠</span>
-          <span class="event-label">Micos</span>
-        </div>
+
         <div class="event-type" onclick="seleccionarTipo('nota', this)">
-          <span class="event-icon">📝</span>
+          <span class="event-icon">&#x1F4DD;</span>
           <span class="event-label">Nota</span>
         </div>
       </div>
@@ -682,7 +664,6 @@
           const d = JSON.parse(e.data);
           if (d.tipo === 'estado') actualizarUI(d);
           if (d.tipo === 'alerta') agregarAlerta(d);
-          if (d.tipo === 'evento') actualizarRecientes(); // Trigger reload when event registered
         } catch (err) { console.error('[WS] Parse error:', err); }
       };
     }
@@ -884,43 +865,7 @@
       while (lista.children.length > 20) lista.removeChild(lista.lastChild);
     }
 
-    async function actualizarRecientes() {
-      try {
-        const res = await fetch('/api/recientes');
-        if (!res.ok) return;
-        const data = await res.json();
-        const lista = document.getElementById('listaRecientes');
-        const card = document.getElementById('cardRecientes');
 
-        if (data.eventos && data.eventos.length > 0) {
-          card.style.display = 'block';
-          lista.innerHTML = '';
-          const iconos = { riego: '💧', fertilizante: '🧪', micorrizas: '🦠', nota: '📝' };
-          
-          data.eventos.forEach(e => {
-            const div = document.createElement('div');
-            div.className = 'historial-item';
-            div.style.padding = '8px 0';
-            div.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-            if (lista.children.length === 2) div.style.border = 'none';
-
-            const dObj = new Date(e.f * 1000 + new Date().getTimezoneOffset() * 60000);
-            const hora = dObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            div.innerHTML = `
-                <div class="hist-icon" style="min-width:30px">${iconos[e.t] || '•'}</div>
-                <div class="hist-info">
-                    <div class="hist-tipo" style="font-size:0.85rem">${e.t} <span style="float:right; font-size:0.7rem; color:var(--text-muted)">${hora}</span></div>
-                    ${e.ml > 0 ? `<div class="hist-val" style="font-size:0.75rem">${e.ml} ml</div>` : ''}
-                </div>
-            `;
-            lista.appendChild(div);
-          });
-        } else {
-          card.style.display = 'none';
-        }
-      } catch (err) { console.error('[Recientes] Error:', err); }
-    }
 
     // --- Gráficos ---
     let chartTH = null;
@@ -1041,6 +986,6 @@
     }
   </script>
   <!-- Microclima V2.1: Calendario Logic -->
-  <script src="calendario.js"></script>
+  <script src="calendario.js?v=5"></script>
 </body>
 </html>

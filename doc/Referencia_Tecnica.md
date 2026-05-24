@@ -1,4 +1,4 @@
-# Especificaciones Técnicas — Jardín 24hs (Microclima V2.0)
+# Especificaciones Técnicas — Jardín 24hs (Microclima V2.1)
 
 Este documento detalla la arquitectura de hardware, asignación de pines y lógica de ingeniería del sistema de control ambiental para cultivo automatizado.
 

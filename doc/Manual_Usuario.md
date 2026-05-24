@@ -1,6 +1,6 @@
-# Manual de Usuario — Jardín 24hs
+# Manual de Usuario — Jardín 24hs (V2.1)
 
-¡Bienvenido al sistema **Jardín 24hs**! Este controlador automatiza el clima de tu cultivo para que no tengas que preocuparte por encender las luces o controlar el calor.
+¡Bienvenido al sistema **Jardín 24hs**! Este controlador automatiza el clima de tu cultivo para que no tengas que preocuparte por encender las luces o controlar el calor. Su interfaz web minimalista (Mobile-First) se adapta perfectamente a la pantalla de tu celular sin necesidad de hacer scroll continuo.
 
 ## 1. Primeros Pasos
 Al encender el equipo, este creará una red WiFi propia.
@@ -24,11 +24,11 @@ En el panel de control podrás ver:
 Toca la pestaña **Gráficos** en la barra inferior para ver la evolución de la temperatura, humedad y VPD de las últimas 24 horas. Esto te ayuda a entender cómo se comporta tu jardín cuando no estás presente.
 
 ## 5. Diario de Cultivo
-En la pestaña **Diario** (icono de libreta) puedes llevar un registro persistente de:
+En la pestaña **Diario** (icono de calendario 📆) puedes llevar un registro persistente de:
 - **Riegos:** Cantidad de agua aplicada (ml).
-- **Fertilización:** Aplicación de nutrientes.
+- **Fertilización:** Aplicación de nutrientes (ml/L).
 - **Notas:** Observaciones sobre carencias, podas o cualquier evento importante.
-Pulsa el botón **"+"** flotante para añadir un nuevo registro. Estos datos se guardan permanentemente en el equipo.
+Al entrar a la pestaña, verás directamente los eventos de hoy. Pulsa el botón **"+ Añadir"** para registrar un nuevo evento. Estos datos se guardan permanentemente en el equipo.
 
 ## 6. Pantalla OLED (Física)
 El equipo tiene una pantalla que rota automáticamente para mostrarte la información vital sin necesidad de usar el celular:

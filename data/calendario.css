@@ -213,18 +213,19 @@
 /* Vista de Cuadrícula Mensual Tradicional */
 .calendar-header {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 8px;
     margin-bottom: 10px;
     font-size: 0.7rem;
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
+    text-align: center;
 }
 
 .calendar-grid-view {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 8px;
     text-align: center;
 }
@@ -305,4 +306,38 @@
     font-style: italic; 
     color: var(--text-muted);
     margin-top: 4px;
+}
+
+/* Chip contextual de fecha seleccionada */
+.cal-chip-fecha {
+    display: none;
+    text-align: center;
+    padding: 8px 16px;
+    margin: 12px 0 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent-green);
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+/* Hint de primera vez con animación suave */
+.cal-chip-fecha.hint-pulse {
+    color: var(--accent-amber);
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.2);
+    animation: hintPulse 1.5s ease-in-out 2;
+}
+
+@keyframes hintPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Long press feedback: escala sutil al mantener presionado */
+.cal-day:active {
+    transform: scale(0.92);
+    transition: transform 0.1s ease;
 }

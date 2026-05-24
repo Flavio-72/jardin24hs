@@ -24,6 +24,7 @@ public:
     
     // Gestión de eventos
     bool registrarEvento(String tipo, int ml, String nota, uint32_t fechaUnix = 0);
+    bool eliminarEvento(uint32_t fechaUnix);
     String obtenerEventosMes(int mes, int anio);
     String obtenerRecientes(int cantidad);
     

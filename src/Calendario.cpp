@@ -51,6 +51,52 @@ bool Calendario::registrarEvento(String tipo, int ml, String nota, uint32_t fech
     return true;
 }
 
+bool Calendario::eliminarEvento(uint32_t fechaUnix) {
+    if (fechaUnix == 0) return false;
+    DateTime d(fechaUnix);
+    char fileName[36];
+    snprintf(fileName, sizeof(fileName), "/cal_%04d_%02d.ndjson", d.year(), d.month());
+
+    if (!LittleFS.exists(fileName)) return false;
+
+    File file = LittleFS.open(fileName, "r");
+    if (!file) return false;
+
+    // Archivo temporal
+    File temp = LittleFS.open("/cal_temp.ndjson", "w");
+    if (!temp) {
+        file.close();
+        return false;
+    }
+
+    bool borrado = false;
+    while (file.available()) {
+        String linea = file.readStringUntil('\n');
+        linea.trim();
+        if (linea.length() > 2) {
+            // Chequear si el JSON tiene la fecha (forma rapida sin parsear todo el JSON)
+            String searchStr = "\"f\":" + String(fechaUnix);
+            if (linea.indexOf(searchStr) >= 0) {
+                borrado = true; // Saltear esta linea
+            } else {
+                temp.println(linea);
+            }
+        }
+    }
+    file.close();
+    temp.close();
+
+    if (borrado) {
+        LittleFS.remove(fileName);
+        LittleFS.rename("/cal_temp.ndjson", fileName);
+        Serial.printf("[CAL] Evento %u eliminado\n", fechaUnix);
+    } else {
+        LittleFS.remove("/cal_temp.ndjson");
+    }
+
+    return borrado;
+}
+
 /**
  * @brief Lee el archivo NDJSON del mes indicado y devuelve un JSON
  *        con array "eventos" compatible con el frontend.

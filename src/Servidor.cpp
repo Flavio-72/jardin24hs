@@ -374,7 +374,7 @@ void inicializarServidor() {
         String tipo = doc["tipo"] | "nota";
         int ml = doc["ml"] | 0;
         String nota = doc["nota"] | "";
-        uint32_t fechaUnix = doc["fechaUnix"] | 0;
+        uint32_t fechaUnix = doc["fechaUnix"].as<uint32_t>();
 
         if (calendario.registrarEvento(tipo, ml, nota, fechaUnix)) {
           ws.textAll("{\"tipo\":\"evento\"}"); 
@@ -383,6 +383,21 @@ void inicializarServidor() {
           request->send(500, "application/json", "{\"error\":\"Error al guardar\"}");
         }
       });
+
+  // API: Eliminar del Calendario
+  server.on("/api/calendario", HTTP_DELETE, [](AsyncWebServerRequest *request) {
+      if (request->hasParam("f")) {
+          uint32_t f = request->getParam("f")->value().toInt();
+          if (calendario.eliminarEvento(f)) {
+              ws.textAll("{\"tipo\":\"evento\"}"); 
+              request->send(200, "application/json", "{\"status\":\"ok\"}");
+          } else {
+              request->send(404, "application/json", "{\"error\":\"No encontrado\"}");
+          }
+      } else {
+          request->send(400, "application/json", "{\"error\":\"Falta timestamp\"}");
+      }
+  });
 
   // WebSocket
   ws.onEvent(onWebSocketEvent);

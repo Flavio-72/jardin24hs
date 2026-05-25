@@ -55,8 +55,8 @@ El extractor se activa automáticamente si se cumple cualquiera de estas condici
 
 El sistema utiliza un sistema de archivos LittleFS (4MB) para almacenamiento histórico:
 - **Sensores:** Registra Temperatura, Humedad y VPD cada 10 minutos (ajustable).
-- **Diario:** Registro persistente de riegos, fertilizaciones y notas.
-- **Gráficos:** El servidor web sirve archivos estáticos (incluyendo Chart.js localmente) para renderizar historiales de 24 horas sin necesidad de internet.
+- **Diario:** Registro persistente de riegos, fertilizaciones, podas, fumigaciones y notas.
+- **Gráficos:** El servidor web sirve archivos estáticos (incluyendo Chart.js y plugins de anotaciones localmente) para renderizar historiales en múltiples rangos (12h, 24h, 48h, 7d) y marcadores de eventos sin necesidad de internet.
 
 ## 6. Interfaz Física (OLED)
 

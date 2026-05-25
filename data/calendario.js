@@ -1,5 +1,5 @@
 /* ======================================
-   Microclima V2.1 — Lógica de Calendario
+   Microclima V2.2 — Lógica de Calendario
    Factorizado y en Castellano - Minimalista
    ====================================== */
 
@@ -13,6 +13,10 @@ let calEstado = {
 let diaSeleccionado = null;  // Número de día seleccionado (1-31), null = hoy
 let eventoAEditar = null;    // Timestamp unix del evento que se está editando
 
+// --- Estado de navegación de mes ---
+let mesVista = new Date().getMonth() + 1;  // 1-12
+let anioVista = new Date().getFullYear();
+
 // --- Long press ---
 let longPressTimer = null;
 const LONG_PRESS_MS = 500;
@@ -22,10 +26,7 @@ function initCalendario() {
 }
 
 function obtenerFechaSeleccionada() {
-    const d = new Date();
-    if (diaSeleccionado !== null) {
-        d.setDate(diaSeleccionado);
-    }
+    const d = new Date(anioVista, mesVista - 1, diaSeleccionado || new Date().getDate());
     return d;
 }
 
@@ -91,14 +92,17 @@ function seleccionarTipo(tipo, el) {
         calEstado.volumen = 1000;
     } else if (tipo === 'fertilizante') {
         unitEl.textContent = 'ml / Litro';
-        calEstado.volumen = 2; // Dosis común
+        calEstado.volumen = 2;
+    } else if (tipo === 'fumigacion') {
+        unitEl.textContent = 'ml / Litro';
+        calEstado.volumen = 2;
     }
     
     displayEl.textContent = calEstado.volumen;
 
-    // Si es una nota, ocultar volumen
+    // Ocultar volumen para nota y poda
     const volControl = document.getElementById('volControl');
-    if (tipo === 'nota') {
+    if (tipo === 'nota' || tipo === 'poda') {
         volControl.style.opacity = '0.3';
         volControl.style.pointerEvents = 'none';
     } else {
@@ -110,8 +114,8 @@ function seleccionarTipo(tipo, el) {
 function cambiarVolumen(delta) {
     // Definir el "paso" (step) según el tipo
     let paso = 100;
-    if (calEstado.tipo === 'fertilizante') {
-        paso = 1; // De a 1ml o 1g
+    if (calEstado.tipo === 'fertilizante' || calEstado.tipo === 'fumigacion') {
+        paso = 1;
     }
     
     // Aplicar el delta corregido por el paso
@@ -207,17 +211,13 @@ async function registrarEnCalendario() {
 }
 
 async function cargarHistorial() {
-    const ahora = new Date();
-    const mes = ahora.getMonth() + 1;
-    const anio = ahora.getFullYear();
-    const cacheKey = `cal_cache_${anio}_${mes}`;
+    const cacheKey = `cal_cache_${anioVista}_${mesVista}`;
 
     try {
-        const res = await fetch(`/api/historial?mes=${mes}&anio=${anio}`);
+        const res = await fetch(`/api/historial?mes=${mesVista}&anio=${anioVista}`);
         let data = { eventos: [] };
         if (res.ok) {
             data = await res.json();
-            // Guardar copia local para modo offline
             localStorage.setItem(cacheKey, JSON.stringify(data));
         } else {
             const cache = localStorage.getItem(cacheKey);
@@ -236,6 +236,24 @@ async function cargarHistorial() {
     }
 }
 
+// --- Navegación de meses ---
+function mesAnterior() {
+    mesVista--;
+    if (mesVista < 1) { mesVista = 12; anioVista--; }
+    diaSeleccionado = null;
+    cargarHistorial();
+}
+
+function mesSiguiente() {
+    const ahora = new Date();
+    // No avanzar más allá del mes actual
+    if (anioVista >= ahora.getFullYear() && mesVista >= ahora.getMonth() + 1) return;
+    mesVista++;
+    if (mesVista > 12) { mesVista = 1; anioVista++; }
+    diaSeleccionado = null;
+    cargarHistorial();
+}
+
 function actualizarChipContextual(dia) {
     const chip = document.getElementById('calChipFecha');
     if (!chip) return;
@@ -246,11 +264,11 @@ function actualizarChipContextual(dia) {
     }
 
     const ahora = new Date();
-    const fecha = new Date(ahora.getFullYear(), ahora.getMonth(), dia);
+    const fecha = new Date(anioVista, mesVista - 1, dia);
     const dias = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
     const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-    const esHoy = dia === ahora.getDate();
+    const esHoy = dia === ahora.getDate() && mesVista === ahora.getMonth() + 1 && anioVista === ahora.getFullYear();
     const label = esHoy 
         ? `📅 Hoy, ${dias[fecha.getDay()]} ${dia}` 
         : `📅 ${dias[fecha.getDay()]} ${dia} ${meses[fecha.getMonth()]}`;
@@ -261,11 +279,31 @@ function actualizarChipContextual(dia) {
 
 function dibujarCalendario(eventos) {
     const ahora = new Date();
-    const anio = ahora.getFullYear();
-    const mes = ahora.getMonth();
+    const anio = anioVista;
+    const mes = mesVista - 1; // 0-indexed para Date()
+    const esMesActual = (mesVista === ahora.getMonth() + 1 && anioVista === ahora.getFullYear());
     
     const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-    document.getElementById('calMonthTitle').textContent = `${meses[mes]} ${anio}`;
+    
+    // Header con navegación
+    const titleEl = document.getElementById('calMonthTitle');
+    const puedeAvanzar = !(anioVista >= ahora.getFullYear() && mesVista >= ahora.getMonth() + 1);
+    titleEl.innerHTML = `<span onclick="mesAnterior()" style="cursor:pointer; padding:6px 12px; font-size:1.1rem;">◀</span> ${meses[mes]} ${anio} <span onclick="mesSiguiente()" style="cursor:pointer; padding:6px 12px; font-size:1.1rem; opacity:${puedeAvanzar ? 1 : 0.3};">▶</span>`;
+
+    // Mostrar día del ciclo si estamos viendo el mes actual
+    const cicloDayEl = document.getElementById('calCicloDay');
+    if (cicloDayEl) {
+        if (esMesActual) {
+            const daySpan = document.getElementById('valDia');
+            const modoSpan = document.getElementById('valModo');
+            const dia = daySpan ? daySpan.textContent : '--';
+            const modo = modoSpan ? modoSpan.textContent : '--';
+            cicloDayEl.textContent = `🌱 Día ${dia} · ${modo}`;
+            cicloDayEl.style.display = 'block';
+        } else {
+            cicloDayEl.style.display = 'none';
+        }
+    }
 
     const container = document.getElementById('calendarContainer');
     container.innerHTML = '';
@@ -284,10 +322,9 @@ function dibujarCalendario(eventos) {
     for (let i = 1; i <= diasEnMes; i++) {
         const div = document.createElement('div');
         div.className = 'cal-day';
-        if (i === ahora.getDate()) div.classList.add('today');
+        if (esMesActual && i === ahora.getDate()) div.classList.add('today');
         
         const tieneEventos = eventos.some(e => {
-            // Compensar el offset local para que el calendario muestre el día real guardado
             const d = new Date(e.f * 1000 + new Date().getTimezoneOffset() * 60000);
             return d.getDate() === i;
         });
@@ -309,14 +346,11 @@ function dibujarCalendario(eventos) {
         // --- Long press: abrir modal directo con esa fecha ---
         div.addEventListener('touchstart', (e) => {
             longPressTimer = setTimeout(() => {
-                // Vibración háptica si el navegador lo soporta
                 if (navigator.vibrate) navigator.vibrate(50);
-                // Seleccionar visualmente el día
                 document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('selected'));
                 div.classList.add('selected');
                 diaSeleccionado = diaNum;
                 actualizarChipContextual(diaNum);
-                // Abrir modal directo con la fecha
                 abrirModalCal(diaNum);
             }, LONG_PRESS_MS);
         }, { passive: true });
@@ -358,11 +392,12 @@ function dibujarCalendario(eventos) {
             dias[diaSeleccionado - 1].classList.add('selected');
         }
         actualizarChipContextual(diaSeleccionado);
-        // Mostrar detalles para que se auto-refresque al guardar/borrar
         mostrarDetallesDia(diaSeleccionado, eventos);
-    } else {
+    } else if (esMesActual) {
         // Mostrar detalles del día actual por defecto
         mostrarDetallesDia(ahora.getDate(), eventos);
+    } else {
+        document.getElementById('eventDetails').innerHTML = '';
     }
 
     // Hint de primera vez
@@ -386,7 +421,8 @@ function mostrarDetallesDia(dia, eventos) {
         return;
     }
 
-    const iconos = { riego: '\uD83D\uDCA7', fertilizante: '\uD83E\uDDEA', nota: '\uD83D\uDCDD' };
+    const iconos = { riego: '💧', fertilizante: '🧪', poda: '✂️', fumigacion: '🛡️', nota: '📝' };
+    const unidades = { riego: 'ml total', fertilizante: 'ml/L', fumigacion: 'ml/L' };
 
     eventosDia.forEach(e => {
         const item = document.createElement('div');
@@ -401,7 +437,7 @@ function mostrarDetallesDia(dia, eventos) {
                     ${e.t} 
                     <span style="float:right; font-size:0.7rem; color:var(--text-muted)">${hora}</span>
                 </div>
-                ${e.ml > 0 ? `<div class="hist-val">${e.ml} ${e.t === 'riego' ? 'ml total' : 'ml/L'}</div>` : ''}
+                ${e.ml > 0 ? `<div class="hist-val">${e.ml} ${unidades[e.t] || ''}</div>` : ''}
                 ${e.n ? `<div class="hist-nota">"${e.n}"</div>` : ''}
                 <div style="margin-top: 8px; text-align: right;">
                     <button onclick="abrirParaEditar(${e.f}, '${e.t}', ${e.ml}, '${e.n.replace(/'/g, "\\'")}')" style="background:none; border:none; color:var(--accent-blue); font-size:0.8rem; cursor:pointer; text-decoration:underline; margin-right:15px;">Editar</button>

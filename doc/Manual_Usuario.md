@@ -21,14 +21,16 @@ En el panel de control podrás ver:
 - **Ajustes:** Aquí puedes cambiar el modo de cultivo o ajustar los límites máximos de calor y humedad para que el extractor se active automáticamente.
 
 ## 4. Historial y Gráficos
-Toca la pestaña **Gráficos** en la barra inferior para ver la evolución de la temperatura, humedad y VPD de las últimas 24 horas. Esto te ayuda a entender cómo se comporta tu jardín cuando no estás presente.
+Toca la pestaña **Gráficos** en la barra inferior para ver la evolución de la temperatura, humedad y VPD. Ahora puedes seleccionar distintos rangos de tiempo (12h, 24h, 48h y 7 días) para analizar el comportamiento del clima. Además, los gráficos muestran marcadores indicando los eventos (riegos, fertilizaciones, etc.) que registraste en el diario para ese período.
 
 ## 5. Diario de Cultivo
 En la pestaña **Diario** (icono de calendario 📆) puedes llevar un registro persistente de:
 - **Riegos:** Cantidad de agua aplicada (ml).
 - **Fertilización:** Aplicación de nutrientes (ml/L).
-- **Notas:** Observaciones sobre carencias, podas o cualquier evento importante.
-Al entrar a la pestaña, verás directamente los eventos de hoy. Pulsa el botón **"+ Añadir"** para registrar un nuevo evento. Estos datos se guardan permanentemente en el equipo.
+- **Poda:** Registro de podas realizadas.
+- **Fumigación:** Aplicación de preventivos o insecticidas (ml/L).
+- **Notas:** Observaciones sobre carencias o cualquier evento importante.
+Puedes navegar entre los distintos meses usando las flechas de navegación en el título. Al entrar a la pestaña, verás directamente los eventos de hoy. Pulsa el botón **"+ Añadir"** para registrar un nuevo evento. Estos datos se guardan permanentemente en el equipo y se muestran también en el título del calendario indicando en qué día del ciclo te encuentras (ej. 🌱 Día 12 · Vege).
 
 ## 6. Pantalla OLED (Física)
 El equipo tiene una pantalla que rota automáticamente para mostrarte la información vital sin necesidad de usar el celular:
